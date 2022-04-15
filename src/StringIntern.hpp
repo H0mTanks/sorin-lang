@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "MemArena.hpp"
 
 //*A string consists of an Intern struct which consists of it's length and pointer to the string.
 struct Intern {
@@ -12,9 +13,10 @@ struct Intern {
 
 struct StringTable {
     std::vector<Intern> interns;
+    Arena arena;
 
-    const char* str_intern_range(const char* start, const char* end);
-    const char* str_intern(const char* str);
+    const char* add_range(const char* start, const char* end);
+    const char* add(const char* str);
 
     void intern_test();
 };
