@@ -3,6 +3,8 @@
 EXECUTABLE_NAME = main.exe
 DIR_SRC = ..\src
 DIR_INCLUDE_VENDOR = ..\src\vendor
+DIR_INCLUDE_VENDOR_LOGGER = ..\src\vendor\logger
+DIR_INCLUDE_VENDOR_TYPES = ..\src\vendor\types
 DIR_BIN = ..\bin
 #DIR_BIN_X86 = $(DIR_BIN)\x86
 DIR_INTERMEDIATE = ..\intermediate
@@ -23,6 +25,8 @@ C_FLAGS = /D_CRT_SECURE_NO_WARNINGS \
   /wd4505 /wd4200 /wd4201 /wd4100 /wd4189 /wd4312 \
   /std:c++14 \
   /Fd$(DIR_BIN)\ \
+  /I$(DIR_INCLUDE_VENDOR_TYPES)\ \
+  /I$(DIR_INCLUDE_VENDOR_LOGGER)\ \
   /DLOGGING \
   /DLOGCOLOR \
 
