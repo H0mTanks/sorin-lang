@@ -2,6 +2,7 @@
 #include <types.hpp>
 #include "StringIntern.hpp"
 #include "Globals.hpp"
+#include "Lex.hpp"
 
 #define ALIGN_DOWN(n, a) ((n) & ~((a) - 1))
 #define ALIGN_UP(n, a) ALIGN_DOWN((n) + (a) - 1, (a))
@@ -13,7 +14,14 @@ int main() {
     std::cout << "hello world\n";
     string_table.intern_test();
 
+    lex_test();
+
     for (Intern const& intern : string_table.interns) {
         std::cout << intern.str << std::endl;
+    }
+
+    for (int i = 0; i < (int)TokenKind::SIZE_OF_ENUM; i++) {
+        //std::cout << i << std::endl;
+        std::cout << token_kind_names[i] << " " << i << std::endl;
     }
 }

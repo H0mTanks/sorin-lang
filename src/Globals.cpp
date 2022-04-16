@@ -28,3 +28,4 @@ void* xmalloc(size_t num_bytes) {
 }
 
 StringTable string_table;
+std::vector<const char*> keywords;
