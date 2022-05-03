@@ -2,8 +2,6 @@
 #include "StringIntern.hpp"
 #include "MemArena.hpp"
 
-extern StringTable string_table;
-
 //*checks if the new string is part of the existing list of strings in the intern table
 //*if it already exists, return a pointer to the underlying char buffer
 //*if it does not exist, allocate memory for it and add it to the intern table.

@@ -1,5 +1,6 @@
-#include "Lex.hpp"
+#include "StringIntern.hpp"
 #include "Globals.hpp"
+#include "Lex.hpp"
 #include <types.hpp>
 #include <cassert>
 #include <vector>
@@ -32,7 +33,7 @@ namespace Keywords {
 
 using namespace Keywords;
 
-#define KEYWORD(name) name##_keyword = string_table.add(#name); keywords.push_back(name##_keyword)
+#define KEYWORD(name) name##_keyword = Global::string_table.add(#name); Global::keywords.push_back(name##_keyword)
 
 Internal void init() {
     static bool inited;
@@ -41,7 +42,7 @@ Internal void init() {
         return;
     }
 
-    char* arena_end = (char*)string_table.arena.end;
+    char* arena_end = (char*)Global::string_table.arena.end;
     KEYWORD(typedef);
     KEYWORD(enum);
     KEYWORD(struct);
@@ -62,7 +63,7 @@ Internal void init() {
     KEYWORD(case);
     KEYWORD(default);
 
-    assert((char*)string_table.arena.end == arena_end);
+    assert((char*)Global::string_table.arena.end == arena_end);
 
     first_keyword = typedef_keyword;
     last_keyword = default_keyword;
@@ -81,15 +82,15 @@ Internal void keywords_test() {
     assert(is_keyword_str(first_keyword));
     assert(is_keyword_str(last_keyword));
 
-    for (const char* word : keywords) {
+    for (const char* word : Global::keywords) {
         assert(is_keyword_str(word));
     }
 
-    assert(!is_keyword_str(string_table.add("foo")));
+    assert(!is_keyword_str(Global::string_table.add("foo")));
 }
 
-std::vector<const char*> token_kind_names;
 Internal void init_token_kind_names() {
+    using namespace Global;
     token_kind_names.reserve((size_t)TokenKind::SIZE_OF_ENUM);
 
     for (int i = 0; i < (int)TokenKind::SIZE_OF_ENUM; i++) {
@@ -125,23 +126,25 @@ Internal void init_token_kind_names() {
 }
 
 Internal const char* token_kind_name(TokenKind kind) {
-    if ((int)kind < token_kind_names.size()) {
-        return token_kind_names[(int)kind];
+    if ((int)kind < Global::token_kind_names.size()) {
+        return Global::token_kind_names[(int)kind];
     }
     else {
         return nullptr;
     }
 }
 
-Token token;
-const char* stream = nullptr;
-
 void next_token() {
     
 }
 
+bool is_token(TokenKind kind) {
+    return Global::token.kind == kind;
+}
+
+
 void init_stream(const char* str) {
-    stream = str;
+    Global::stream = str;
     next_token();
 }
 

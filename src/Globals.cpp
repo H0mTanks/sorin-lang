@@ -1,4 +1,6 @@
 #include "Globals.hpp"
+#include "StringIntern.hpp"
+#include "Lex.hpp"
 
 void* xcalloc(size_t num_elems, size_t elem_size) {
     void* ptr = calloc(num_elems, elem_size);
@@ -27,5 +29,14 @@ void* xmalloc(size_t num_bytes) {
     return ptr;
 }
 
+namespace Global {
+
 StringTable string_table;
 std::vector<const char*> keywords;
+
+Token token;
+std::vector<const char*> token_kind_names;
+
+const char* stream = nullptr;
+
+}

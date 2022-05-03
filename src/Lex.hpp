@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <types.hpp>
 
 namespace Keywords {
     extern const char* typedef_keyword;
@@ -82,9 +83,7 @@ struct Token {
     };
 };
 
-//*code stream
-extern const char* stream;
-extern Token token;
-extern std::vector<const char*> token_kind_names;
+void next_token();
+void is_token();
 void init_stream(const char* str);
 void lex_test();
