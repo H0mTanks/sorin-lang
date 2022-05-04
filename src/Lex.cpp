@@ -1,6 +1,7 @@
 #include "StringIntern.hpp"
 #include "Globals.hpp"
 #include "Lex.hpp"
+#include <cctype>
 #include <types.hpp>
 #include <cassert>
 #include <vector>
@@ -94,7 +95,7 @@ Internal void init_token_kind_names() {
     token_kind_names.reserve((size_t)TokenKind::SIZE_OF_ENUM);
 
     for (int i = 0; i < (int)TokenKind::SIZE_OF_ENUM; i++) {
-        token_kind_names.push_back("0");
+        token_kind_names.push_back(nullptr);
     }
 
     token_kind_names[(int)TokenKind::END_OF_FILE] = "EOF";
@@ -134,12 +135,87 @@ Internal const char* token_kind_name(TokenKind kind) {
     }
 }
 
+Internal size_t copy_token_kind_str(char* dest, size_t dest_size, TokenKind kind) {
+    size_t n = 0;
+    const char* name = token_kind_name(kind);
+
+    if (name) {
+        n = snprintf(dest, dest_size, "%s", name);
+    }
+    else if (static_cast<int>(kind) < 128 && isprint(static_cast<int>(kind))) {
+        n = snprintf(dest, dest_size, "%c", static_cast<int>(kind));
+    }
+    else {
+        n = snprintf(dest, dest_size, "<ASCII %d>", static_cast<int>(kind));
+    }
+
+    return n;
+}
+
+Internal const char* temp_token_kind_str(TokenKind kind) {
+    LocalPersist char buf[256];
+    size_t n = copy_token_kind_str(buf, sizeof(buf), kind);
+    assert(n + 1 <= sizeof(buf));
+    return buf;
+}
+
 void next_token() {
     
 }
 
 bool is_token(TokenKind kind) {
     return Global::token.kind == kind;
+}
+
+bool is_token_eof()
+{
+    return Global::token.kind == TokenKind::END_OF_FILE;
+}
+
+bool is_token_name(const char* name)
+{
+    return Global::token.kind == TokenKind::NAME && Global::token.name == name;
+}
+
+bool is_keyword(const char* name)
+{
+    return is_token(TokenKind::KEYWORD) && Global::token.name == name;
+}
+
+bool match_keyword(const char* name)
+{
+    if (is_keyword(name)) {
+        next_token();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool match_token(TokenKind kind)
+{
+    if (is_token(kind)) {
+        next_token();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool expect_token(TokenKind kind)
+{
+    if (is_token(kind)) {
+        next_token();
+        return true;
+    }
+    else {
+        char buf[256];
+        copy_token_kind_str(buf, sizeof(buf), kind);
+        fatal("Expected token: %s, got: %s", buf, temp_token_kind_str(Global::token.kind));
+        return false;
+    }
 }
 
 

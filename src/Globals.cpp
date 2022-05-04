@@ -1,3 +1,4 @@
+#include <cstdarg>
 #include "Globals.hpp"
 #include "StringIntern.hpp"
 #include "Lex.hpp"
@@ -27,6 +28,16 @@ void* xmalloc(size_t num_bytes) {
         exit(1);
     }
     return ptr;
+}
+
+void fatal(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    printf("FATAL: ");
+    vprintf(fmt, args);
+    printf("\n");
+    va_end(args);
+    exit(1);
 }
 
 namespace Global {

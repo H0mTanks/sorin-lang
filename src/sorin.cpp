@@ -21,7 +21,7 @@ int main() {
     }
 
     for (int i = 0; i < (int)TokenKind::SIZE_OF_ENUM; i++) {
-        if (*Global::token_kind_names[i] == '0') {
+        if (!Global::token_kind_names[i]) {
             continue;
         }
 

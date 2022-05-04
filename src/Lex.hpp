@@ -84,6 +84,14 @@ struct Token {
 };
 
 void next_token();
-void is_token();
+bool is_token(TokenKind kind);
+bool is_token_eof();
+bool is_token_name(const char* name);
+bool is_keyword(const char* name);
+bool match_keyword(const char* name);
+bool match_token(TokenKind kind);
+bool expect_token(TokenKind kind);
+
+
 void init_stream(const char* str);
 void lex_test();

@@ -9,6 +9,7 @@ void* xrealloc(void* ptr, size_t num_bytes);
 
 void* xmalloc(size_t num_bytes);
 
+void fatal(const char* fmt, ...);
 
 namespace Global {
 
