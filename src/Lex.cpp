@@ -159,8 +159,125 @@ Internal const char* temp_token_kind_str(TokenKind kind) {
     return buf;
 }
 
-void next_token() {
+
+Internal u8 hex_char_to_digit(char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
     
+    if ((c >= 'a' && c <= 'f')) {
+        return (c - 'a' + 10);
+    }
+
+    if (c >= 'A' && c <= 'F') {
+        return (c - 'A' + 10);
+    }
+
+    return 0;
+}
+
+
+Internal void scan_int() {
+    u64 base = 10;
+    if (*Global::stream == '0') {
+        Global::stream++;
+        char c = *Global::stream;
+        if (tolower(c) == 'x') {
+            Global::stream++;
+            Global::token.mod = TokenMod::HEX;
+            base = 16;
+        }
+        else if (tolower(c) == 'b') {
+            Global::stream++;
+            Global::token.mod = TokenMod::BIN;
+            base = 2;
+        }
+        else if (isdigit(*Global::stream)) {
+            Global::token.mod = TokenMod::OCT;
+            base = 8;
+        }
+    }
+
+    u64 val = 0;
+    while (true) {
+        char c = *Global::stream;
+        u64 digit = hex_char_to_digit(c);
+        
+        if (digit == 0 && *Global::stream != '0') {
+            //*char to digit returned an invalid value
+            break;
+        }
+
+        if (digit >= base) {
+            syntax_error("Digit '%c' out of range of base %llu", *Global::stream, base);
+            digit = 0;
+        }
+        if (val > (UINT64_MAX - digit) / base) {
+            syntax_error("Integer literal overflow");
+            while (isdigit(*Global::stream)) {
+                Global::stream++;
+            }
+            val = 0;
+            break;
+        }
+
+        val = val * base + digit;
+        Global::stream++;
+    }
+
+    Global::token.kind = TokenKind::INT;
+    Global::token.int_val = val;
+}
+
+
+void next_token() {
+    //get to start of each token
+    while(isspace(*Global::stream)) {
+        Global::stream++;
+    }
+
+    Global::token.start = Global::stream;
+    Global::token.mod = TokenMod::NONE;
+
+    switch(*Global::stream) {
+        case '\'': {
+            //scan_char();
+            break;
+        }
+        case '"': {
+            //scan_str();
+            break;
+        }
+        case '.': {
+            //scan_float();
+            break;
+        }
+        case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
+            while (isdigit(*Global::stream)) {
+                Global::stream++;
+            }
+
+            char c = *Global::stream;
+            Global::stream = Global::token.start;
+
+            if (c == '.' || c == 'e') {
+                //scan_float();
+            }
+            else {
+                scan_int();
+            }
+
+            break;
+        }
+        default: {
+            //*stream is null terminated so eof will be automatically put in tokenkind
+            Global::token.kind = static_cast<TokenKind>(*Global::stream);
+            Global::stream++;
+            break;
+        }
+    }
+
+    Global::token.end = Global::stream;
 }
 
 bool is_token(TokenKind kind) {
@@ -224,7 +341,23 @@ void init_stream(const char* str) {
     next_token();
 }
 
+#define ASSERT_TOKEN(x) assert(match_token(x))
+#define ASSERT_TOKEN_INT(x) assert(Global::token.int_val == (x) && match_token(TokenKind::INT))
+#define ASSERT_TOKEN_EOF() assert(is_token_eof())
+
+
 void lex_test() {
     keywords_test();
     init_token_kind_names();
+    init_stream("0 18446744073709551615 0xffffffffffffffff 042 0b1111");
+
+    ASSERT_TOKEN_INT(0);
+    ASSERT_TOKEN_INT(18446744073709551615ull);
+    assert(Global::token.mod == TokenMod::HEX);
+    ASSERT_TOKEN_INT(0xffffffffffffffff);
+    assert(Global::token.mod == TokenMod::OCT);
+    ASSERT_TOKEN_INT(042);
+    assert(Global::token.mod == TokenMod::BIN);
+    ASSERT_TOKEN_INT(0xF);
+    ASSERT_TOKEN_EOF();
 }

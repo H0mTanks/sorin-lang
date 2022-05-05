@@ -11,6 +11,10 @@ void* xmalloc(size_t num_bytes);
 
 void fatal(const char* fmt, ...);
 
+void syntax_error(const char* fmt, ...);
+
+void fatal_syntax_error(const char* fmt, ...);
+
 namespace Global {
 
 extern StringTable string_table;
