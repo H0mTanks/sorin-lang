@@ -229,6 +229,42 @@ Internal void scan_int() {
     Global::token.int_val = val;
 }
 
+Internal void scan_float() {
+    using namespace Global;
+    const char* start = stream;
+
+    //*take stream to the end of the number
+    while(isdigit(*stream)) {
+        stream++;
+    }
+    if (*stream == '.') {
+        stream++;
+    }
+    while (isdigit(*stream)) {
+        stream++;
+    }
+
+    if (tolower(*stream) == 'e') {
+        stream++;
+        if (*stream == '-' || *stream == '+') {
+            stream++;
+        }
+        if (!isdigit(*stream)) {
+            syntax_error("Expected digit after float literal exponent, found '%c'.", *stream);
+        }
+        while (isdigit(*stream)) {
+            stream++;
+        }
+    }
+
+    //*we now have a valid float in the stream
+    f64 val = strtod(start,  nullptr);
+    if (val == HUGE_VAL || val == -HUGE_VAL) {
+        syntax_error("Float literal overflow");
+    }
+    token.kind = TokenKind::FLOAT;
+    token.float_val = val;
+}
 
 void next_token() {
     //get to start of each token
@@ -249,7 +285,7 @@ void next_token() {
             break;
         }
         case '.': {
-            //scan_float();
+            scan_float();
             break;
         }
         case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
@@ -261,7 +297,7 @@ void next_token() {
             Global::stream = Global::token.start;
 
             if (c == '.' || c == 'e') {
-                //scan_float();
+                scan_float();
             }
             else {
                 scan_int();
@@ -343,6 +379,7 @@ void init_stream(const char* str) {
 
 #define ASSERT_TOKEN(x) assert(match_token(x))
 #define ASSERT_TOKEN_INT(x) assert(Global::token.int_val == (x) && match_token(TokenKind::INT))
+#define ASSERT_TOKEN_FLOAT(x) assert(Global::token.float_val == (x) && match_token(TokenKind::FLOAT))
 #define ASSERT_TOKEN_EOF() assert(is_token_eof())
 
 
@@ -351,6 +388,7 @@ void lex_test() {
     init_token_kind_names();
     init_stream("0 18446744073709551615 0xffffffffffffffff 042 0b1111");
 
+    //*integer literal tests
     ASSERT_TOKEN_INT(0);
     ASSERT_TOKEN_INT(18446744073709551615ull);
     assert(Global::token.mod == TokenMod::HEX);
@@ -360,4 +398,17 @@ void lex_test() {
     assert(Global::token.mod == TokenMod::BIN);
     ASSERT_TOKEN_INT(0xF);
     ASSERT_TOKEN_EOF();
+
+    //*float literal tests
+    init_stream("3.14 .123 42. 3e10");
+    ASSERT_TOKEN_FLOAT(3.14);
+    ASSERT_TOKEN_FLOAT(.123);
+    ASSERT_TOKEN_FLOAT(42.);
+    ASSERT_TOKEN_FLOAT(3e10);
+    ASSERT_TOKEN_EOF();
 }
+
+#undef ASSERT_TOKEN
+#undef ASSERT_TOKEN_INT
+#undef ASSERT_TOKEN_FLOAT
+#undef ASSERT_TOKEN_EOF
