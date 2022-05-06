@@ -266,6 +266,58 @@ Internal void scan_float() {
     token.float_val = val;
 }
 
+Internal char char_to_escape(char c) {
+    switch(c) {
+        case 'n': return '\n';
+        case 'r': return '\r';
+        case 't': return '\t';
+        case 'v': return '\v';
+        case 'b': return '\b';
+        case 'a': return '\a';
+        case '0': return 0;
+    }
+
+    return 0;
+}
+
+Internal void scan_char() {
+    using namespace Global;
+    assert(*stream == '\'');
+    stream++;
+
+    char val = 0;
+    if (*stream == '\'') {
+        syntax_error("Char literal cannot be empty");
+        stream++;
+    }
+    else if (*stream == '\n') {
+        syntax_error("Char literal cannot contain newline");
+    }
+    else if (*stream == '\\') {
+        stream++;
+        val = char_to_escape(*stream);
+        if (val == 0 && *stream != '0') {
+            syntax_error("Invalid char literal escape '\\%c'", *stream);
+        }
+        stream++;
+    }
+    else {
+        val = *stream;
+        stream++;
+    }
+
+    if (*stream != '\'') {
+        syntax_error("Expected closing char quote, found '\\%c", *stream);
+    }
+    else {
+        stream++;
+    }
+
+    token.kind = TokenKind::INT;
+    token.int_val = val;
+    token.mod = TokenMod::CHAR;
+}
+
 void next_token() {
     //get to start of each token
     while(isspace(*Global::stream)) {
@@ -277,7 +329,7 @@ void next_token() {
 
     switch(*Global::stream) {
         case '\'': {
-            //scan_char();
+            scan_char();
             break;
         }
         case '"': {
@@ -405,6 +457,12 @@ void lex_test() {
     ASSERT_TOKEN_FLOAT(.123);
     ASSERT_TOKEN_FLOAT(42.);
     ASSERT_TOKEN_FLOAT(3e10);
+    ASSERT_TOKEN_EOF();
+
+    //*char literal tests
+    init_stream("'a' '\\n'");
+    ASSERT_TOKEN_INT('a');
+    ASSERT_TOKEN_INT('\n');
     ASSERT_TOKEN_EOF();
 }
 
