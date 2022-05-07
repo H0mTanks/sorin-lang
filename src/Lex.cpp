@@ -351,6 +351,7 @@ Internal void scan_str() {
         syntax_error("Unexpected end of file in string literal");
     }
 
+    //? do we have to allocate memory
     size_t sz = ss.str().size();
     char* str = (char*)malloc(sz + 1);
     strncpy(str, ss.str().c_str(), sz + 1);
@@ -359,16 +360,45 @@ Internal void scan_str() {
     token.str_val = str;
 }
 
-void next_token() {
-    //get to start of each token
-    while(isspace(*Global::stream)) {
+Internal TokenKind op_single_kind(char op1, char op2, TokenKind other_kind) {
+    TokenKind kind = static_cast<TokenKind>(op1); // *Global::stream is op1
+    Global::stream++;
+
+    if (*Global::stream == op2) {
+        kind = other_kind;
         Global::stream++;
     }
 
-    Global::token.start = Global::stream;
-    Global::token.mod = TokenMod::NONE;
+    return kind;
+}
 
-    switch(*Global::stream) {
+Internal TokenKind op_double_kind(char op1, char op2, TokenKind first_kind, char op3, TokenKind second_kind) {
+    TokenKind kind = static_cast<TokenKind>(op1); // *Global::stream is op1
+    Global::stream++;
+
+    if (*Global::stream == op2) {
+        kind = first_kind;
+        Global::stream++;
+    }
+    else if (*Global::stream == op3) {
+        kind = second_kind;
+        Global::stream++;
+    }
+
+    return kind;
+}
+
+void next_token() {
+    using namespace Global;
+    //get to start of each token
+    while(isspace(*stream)) {
+        stream++;
+    }
+
+    token.start = Global::stream;
+    token.mod = TokenMod::NONE;
+
+    switch(*stream) {
         case '\'': {
             scan_char();
             break;
@@ -382,12 +412,12 @@ void next_token() {
             break;
         }
         case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
-            while (isdigit(*Global::stream)) {
-                Global::stream++;
+            while (isdigit(*stream)) {
+                stream++;
             }
 
-            char c = *Global::stream;
-            Global::stream = Global::token.start;
+            char c = *stream;
+            stream = token.start;
 
             if (c == '.' || c == 'e') {
                 scan_float();
@@ -398,10 +428,110 @@ void next_token() {
 
             break;
         }
+        //*keywords or identifiers
+        case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g': case 'h': case 'i': case 'j':
+        case 'k': case 'l': case 'm': case 'n': case 'o': case 'p': case 'q': case 'r': case 's': case 't':
+        case 'u': case 'v': case 'w': case 'x': case 'y': case 'z': case 'A': case 'B': case 'C': case 'D':
+        case 'E': case 'F': case 'G': case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N':
+        case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U': case 'V': case 'W': case 'X':
+        case 'Y': case 'Z': case '_': {
+            while (isalnum(*stream) || *stream == '_') {
+                stream++;
+            }
+            token.name = string_table.add_range(token.start, stream);
+            token.kind = is_keyword_str(token.name) ? TokenKind::KEYWORD : TokenKind::NAME;
+            break;
+        }
+        //*operators
+        case '<': {
+            token.kind = static_cast<TokenKind>(*stream);
+            stream++;
+
+            if (*stream == '<') {
+                token.kind = TokenKind::LSHIFT;
+                stream++;
+
+                if (*stream == '=') {
+                    token.kind = TokenKind::LSHIFT_ASSIGN;
+                    stream++;
+                }
+            }
+            else if (*stream == '=') {
+                token.kind = TokenKind::LTEQ;
+                stream++;
+            }
+            break;
+        }
+        case '>': {
+            token.kind = static_cast<TokenKind>(*stream);
+            stream++;
+
+            if (*stream == '>') {
+                token.kind = TokenKind::RSHIFT;
+                stream++;
+
+                if (*stream == '=') {
+                    token.kind = TokenKind::RSHIFT_ASSIGN;
+                    stream++;
+                }
+            }
+            else if (*stream == '=') {
+                token.kind = TokenKind::GTEQ;
+                stream++;
+            }
+            break;
+        }
+        case '=': {
+            token.kind = op_single_kind('=', '=', TokenKind::EQ);
+            // token.kind = static_cast<TokenKind>(*stream);
+            // stream++;
+
+            // if (*stream == '=') {
+            //     token.kind = TokenKind::EQ;
+            //     stream++;
+            // }
+            break;
+        }
+        case '^': {
+            token.kind = op_single_kind('^', '=', TokenKind::XOR_ASSIGN);
+            break;
+        }
+        case ':': {
+            token.kind = op_single_kind(':', '=', TokenKind::COLON_ASSIGN);
+            break;
+        }
+        case '*': {
+            token.kind = op_single_kind('*', '=', TokenKind::MUL_ASSIGN);
+            break;
+        }
+        case '/': {
+            token.kind = op_single_kind('/', '=', TokenKind::DIV_ASSIGN);
+            break;
+        }
+        case '%': {
+            token.kind = op_single_kind('%', '=', TokenKind::MOD_ASSIGN);
+            break;
+        }
+        case '+': {
+            token.kind = op_double_kind('+', '=', TokenKind::ADD_ASSIGN, '+', TokenKind::INC);
+            break;
+        }
+        case '-': {
+            token.kind = op_double_kind('-', '=', TokenKind::SUB_ASSIGN, '-', TokenKind::DEC);
+            break;
+        }
+        case '&': {
+            token.kind = op_double_kind('&', '=', TokenKind::AND_ASSIGN, '&', TokenKind::AND);
+            break;
+        }
+        case '|': {
+            token.kind = op_double_kind('|', '=', TokenKind::OR_ASSIGN, '&', TokenKind::OR);
+            break;
+        }
         default: {
             //*stream is null terminated so eof will be automatically put in tokenkind
-            Global::token.kind = static_cast<TokenKind>(*Global::stream);
-            Global::stream++;
+            token.kind = static_cast<TokenKind>(*stream);
+            stream++;
             break;
         }
     }
@@ -470,7 +600,7 @@ void init_stream(const char* str) {
     next_token();
 }
 
-#define ASSERT_TOKEN(x) assert(match_token(x))
+#define ASSERT_TOKEN(x) assert(match_token(static_cast<TokenKind>((x))))
 #define ASSERT_TOKEN_INT(x) assert(Global::token.int_val == (x) && match_token(TokenKind::INT))
 #define ASSERT_TOKEN_FLOAT(x) assert(Global::token.float_val == (x) && match_token(TokenKind::FLOAT))
 #define ASSERT_TOKEN_STR(x) assert(strcmp(Global::token.str_val, (x)) == 0 && match_token(TokenKind::STR))
@@ -512,9 +642,25 @@ void lex_test() {
     ASSERT_TOKEN_STR("foo");
     ASSERT_TOKEN_STR("a\nb");
     ASSERT_TOKEN_EOF();
+
+    //*operator tests
+    init_stream(": := + += ++ < <= << <<=");
+    ASSERT_TOKEN(':');
+    ASSERT_TOKEN(TokenKind::COLON_ASSIGN);
+    ASSERT_TOKEN('+');
+    ASSERT_TOKEN(TokenKind::ADD_ASSIGN);
+    ASSERT_TOKEN(TokenKind::INC);
+    ASSERT_TOKEN('<');
+    ASSERT_TOKEN(TokenKind::LTEQ);
+    ASSERT_TOKEN(TokenKind::LSHIFT);
+    ASSERT_TOKEN(TokenKind::LSHIFT_ASSIGN);
+    ASSERT_TOKEN_EOF();
+
+    
 }
 
 #undef ASSERT_TOKEN
 #undef ASSERT_TOKEN_INT
 #undef ASSERT_TOKEN_FLOAT
+#undef ASSERT_TOKEN_STR
 #undef ASSERT_TOKEN_EOF
