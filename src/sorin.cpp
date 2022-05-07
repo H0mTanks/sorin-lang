@@ -3,6 +3,7 @@
 #include "StringIntern.hpp"
 #include "Globals.hpp"
 #include "Lex.hpp"
+#include <sstream>
 
 #define ALIGN_DOWN(n, a) ((n) & ~((a) - 1))
 #define ALIGN_UP(n, a) ALIGN_DOWN((n) + (a) - 1, (a))
@@ -27,4 +28,5 @@ int main() {
 
         std::cout << Global::token_kind_names[i] << " " << i << std::endl;
     }
+
 }

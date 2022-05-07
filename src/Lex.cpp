@@ -5,6 +5,7 @@
 #include <types.hpp>
 #include <cassert>
 #include <vector>
+#include <sstream>
 
 namespace Keywords {
     const char* typedef_keyword = nullptr;
@@ -318,6 +319,46 @@ Internal void scan_char() {
     token.mod = TokenMod::CHAR;
 }
 
+Internal void scan_str() {
+    using namespace Global;
+    assert(*stream == '"');
+    stream++;
+
+    std::ostringstream ss;
+    while (*stream && *stream != '"') {
+        char val = *stream;
+        if (val == '\n') {
+            syntax_error("String literal cannot contain newline");
+            break;
+        }
+        else if (val == '\\') {
+            stream++;
+            val = char_to_escape(*stream);
+            if (val == 0 && *stream != '0') {
+                syntax_error("Invalid string literal escape char '\\%c'", *stream);
+            }
+        }
+
+        ss << val;
+        stream++;
+    }
+
+    if (*stream) {
+        assert(*stream == '"');
+        stream++;
+    }
+    else {
+        syntax_error("Unexpected end of file in string literal");
+    }
+
+    size_t sz = ss.str().size();
+    char* str = (char*)malloc(sz + 1);
+    strncpy(str, ss.str().c_str(), sz + 1);
+
+    token.kind = TokenKind::STR;
+    token.str_val = str;
+}
+
 void next_token() {
     //get to start of each token
     while(isspace(*Global::stream)) {
@@ -333,7 +374,7 @@ void next_token() {
             break;
         }
         case '"': {
-            //scan_str();
+            scan_str();
             break;
         }
         case '.': {
@@ -432,6 +473,7 @@ void init_stream(const char* str) {
 #define ASSERT_TOKEN(x) assert(match_token(x))
 #define ASSERT_TOKEN_INT(x) assert(Global::token.int_val == (x) && match_token(TokenKind::INT))
 #define ASSERT_TOKEN_FLOAT(x) assert(Global::token.float_val == (x) && match_token(TokenKind::FLOAT))
+#define ASSERT_TOKEN_STR(x) assert(strcmp(Global::token.str_val, (x)) == 0 && match_token(TokenKind::STR))
 #define ASSERT_TOKEN_EOF() assert(is_token_eof())
 
 
@@ -463,6 +505,12 @@ void lex_test() {
     init_stream("'a' '\\n'");
     ASSERT_TOKEN_INT('a');
     ASSERT_TOKEN_INT('\n');
+    ASSERT_TOKEN_EOF();
+
+    //* string literal tests
+    init_stream("\"foo\" \"a\\nb\"");
+    ASSERT_TOKEN_STR("foo");
+    ASSERT_TOKEN_STR("a\nb");
     ASSERT_TOKEN_EOF();
 }
 
