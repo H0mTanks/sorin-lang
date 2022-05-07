@@ -600,7 +600,8 @@ void init_stream(const char* str) {
     next_token();
 }
 
-#define ASSERT_TOKEN(x) assert(match_token(static_cast<TokenKind>((x))))
+#define ASSERT_TOKEN(x) assert(match_token(static_cast<TokenKind>(x)))
+#define ASSERT_TOKEN_NAME(x) assert(Global::token.name == Global::string_table.add(x) && match_token(TokenKind::NAME))
 #define ASSERT_TOKEN_INT(x) assert(Global::token.int_val == (x) && match_token(TokenKind::INT))
 #define ASSERT_TOKEN_FLOAT(x) assert(Global::token.float_val == (x) && match_token(TokenKind::FLOAT))
 #define ASSERT_TOKEN_STR(x) assert(strcmp(Global::token.str_val, (x)) == 0 && match_token(TokenKind::STR))
@@ -656,10 +657,23 @@ void lex_test() {
     ASSERT_TOKEN(TokenKind::LSHIFT_ASSIGN);
     ASSERT_TOKEN_EOF();
 
-    
+    //*misc tests
+    init_stream("XY+(XY)_HELLO1,234+994");
+    ASSERT_TOKEN_NAME("XY");
+    ASSERT_TOKEN('+');
+    ASSERT_TOKEN('(');
+    ASSERT_TOKEN_NAME("XY");
+    ASSERT_TOKEN(')');
+    ASSERT_TOKEN_NAME("_HELLO1");
+    ASSERT_TOKEN(',');
+    ASSERT_TOKEN_INT(234);
+    ASSERT_TOKEN('+');
+    ASSERT_TOKEN_INT(994);
+    ASSERT_TOKEN_EOF();
 }
 
 #undef ASSERT_TOKEN
+#undef ASSERT_TOKEN_NAME
 #undef ASSERT_TOKEN_INT
 #undef ASSERT_TOKEN_FLOAT
 #undef ASSERT_TOKEN_STR
