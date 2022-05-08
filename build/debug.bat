@@ -1,1 +1,1 @@
-devenv ../bin/main.exe ../src/sorin.cpp
+remedybg ../bin/main.exe

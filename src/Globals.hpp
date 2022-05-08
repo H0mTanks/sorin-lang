@@ -28,4 +28,7 @@ extern std::vector<const char*> token_kind_names;
 //*codefile stream
 extern const char* stream;
 
+//*memory for ast
+extern Arena ast_arena;
+
 }

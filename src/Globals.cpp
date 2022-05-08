@@ -69,4 +69,6 @@ std::vector<const char*> token_kind_names;
 
 const char* stream = nullptr;
 
+Arena ast_arena;
+
 }
