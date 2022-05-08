@@ -150,9 +150,155 @@ void print_expr(Expr* expr) {
     }
 }
 
+void print_stmt_block(StmtBlock block) {
+    printf("(block");
+    indent++;
+
+    for (Stmt** it = block.stmts; it != block.stmts + block.num_stmts; it++) {
+        print_stmt(*it);
+    }
+
+    indent--;
+    printf(")");
+}
+
+void print_stmt(Stmt* stmt) {
+    Stmt* s = stmt;
+    switch (s->kind) {
+        case StmtKind::RETURN: {
+            printf("(return ");
+            print_expr(s->return_stmt.expr);
+            printf(")");
+            break;
+        }
+        case StmtKind::BREAK: {
+            printf("(break)");
+            break;
+        }
+        case StmtKind::CONTINUE: {
+            printf("(continue)");
+            break;
+        }
+        case StmtKind::BLOCK: {
+            print_stmt_block(s->block);
+            break;
+        }
+        case StmtKind::IF: {
+            printf("(if ");
+            print_expr(s->if_stmt.cond);
+            indent++;
+            print_newline();
+            print_stmt_block(s->if_stmt.then_block);
+
+            for (ElseIf* it = s->if_stmt.elseifs; it != s->if_stmt.elseifs + s->if_stmt.num_elseifs; it++) {
+                print_newline();
+                printf("elseif ");
+                print_expr(it->cond);
+                print_newline();
+                print_stmt_block(it->block);
+            }
+
+            if (s->if_stmt.else_block.num_stmts != 0) {
+                print_newline();
+                printf("else ");
+                print_newline();
+                print_stmt_block(s->if_stmt.else_block);
+            }
+
+            indent--;
+            printf(")");
+            break;
+        }
+        case StmtKind::WHILE: {
+            printf("(while ");
+            print_expr(s->while_stmt.cond);
+            indent++;
+            print_newline();
+            print_stmt_block(s->while_stmt.block);
+            indent--;
+            printf(")");
+            break;
+        }
+        case StmtKind::DO_WHILE: {
+            printf("(do-while ");
+            print_expr(s->while_stmt.cond);
+            indent++;
+            print_newline();
+            print_stmt_block(s->while_stmt.block);
+            indent--;
+            printf(")");
+            break;
+        }
+        case StmtKind::FOR: {
+            printf("(for ");
+            print_stmt(s->for_stmt.init);
+            print_expr(s->for_stmt.cond);
+            print_stmt(s->for_stmt.next);
+            indent++;
+            print_newline();
+            print_stmt_block(s->for_stmt.block);
+            indent--;
+            printf(")");
+            break;
+        }
+        case StmtKind::SWITCH: {
+            printf("(switch ");
+            print_expr(s->switch_stmt.expr);
+            indent++;
+
+            for (SwitchCase* it = s->switch_stmt.cases; it != s->switch_stmt.cases + s->switch_stmt.num_cases; it++) {
+                print_newline();
+                printf("(case (%s", it->is_default ? " default" : "");
+
+                for (Expr** expr = it->exprs; expr != it->exprs + it->num_exprs; expr++) {
+                    printf(" ");
+                    print_expr(*expr);
+                }
+                printf(") ");
+                indent++;
+                print_newline();
+                print_stmt_block(it->block);
+                indent--;
+            }
+            indent--;
+            printf(")");
+            break;
+        }
+        case StmtKind::ASSIGN: {
+            printf("(%s ", temp_token_kind_str(s->assign.op));//?different in sorin_old
+            print_expr(s->assign.left);
+            if (s->assign.right) {
+                printf(" ");
+                print_expr(s->assign.right);
+            }
+            printf(")");
+            break;
+        }
+        case StmtKind::INIT: {
+            printf("(:= %s ", s->init.name);
+            print_expr(s->init.expr);
+            printf(")");
+            break;
+        }
+        case StmtKind::EXPR: {
+            print_expr(s->expr);
+            break;
+        }
+        default: {
+            assert(0);
+            break;
+        }
+    }
+}
+
 template<typename T>
 T** list(const std::initializer_list<T*>& lst) {
     return const_cast<T**>(lst.begin());
+}
+
+template<typename T>
+T* list_single(const std::initializer_list<T>& lst) {
+    return const_cast<T*>(lst.begin());
 }
 
 void print_tests() {
@@ -170,6 +316,90 @@ void print_tests() {
 
     for (Expr** it = exprs; it != exprs + sizeof(exprs) / sizeof(*exprs); it++) {
         print_expr(*it);
+        printf("\n");
+    }
+
+    printf("\n\n\n");
+
+    // Statements
+    Stmt *stmts[] = {
+        stmt_return(expr_int(42)),
+        stmt_break(),
+        stmt_continue(),
+        stmt_block(
+            StmtBlock{
+                list({
+                    stmt_break(),
+                    stmt_continue()
+                }),
+                2,
+             }
+        ),
+        stmt_expr(expr_call(expr_name("print"), list({expr_int(1), expr_int(2)}), 2)),
+        stmt_init("x", expr_int(42)),
+        stmt_if(
+            expr_name("flag1"),
+            StmtBlock{
+                list({
+                    stmt_return(expr_int(1))
+                }),
+                1,
+            },
+            list_single({
+                ElseIf{
+                    expr_name("flag2"),
+                    StmtBlock{
+                        list({
+                            stmt_return(expr_int(2))
+                        }),
+                        1,
+                    }
+                },
+            }),
+            1,
+            StmtBlock{
+                list({
+                    stmt_return(expr_int(3))
+                }),
+                1,
+            }
+        ),
+        stmt_while(
+            expr_name("running"),
+            StmtBlock{
+                list({
+                    stmt_assign(TokenKind::ADD_ASSIGN, expr_name("i"), expr_int(16)),
+                }),
+                1,
+            }
+        ),
+        stmt_switch(
+            expr_name("val"),
+            list_single({
+                SwitchCase{
+                    list({expr_int(3), expr_int(4)}),
+                    2,
+                    false,
+                    StmtBlock{
+                        list({stmt_return(expr_name("val"))}),
+                        1,
+                    },
+                },
+                SwitchCase{
+                    list({expr_int(1)}),
+                    1,
+                    true,
+                    StmtBlock{
+                        list({stmt_return(expr_int(0))}),
+                        1,
+                    },
+                },
+            }),
+            2
+        ),
+    };
+    for (Stmt **it = stmts; it != stmts + sizeof(stmts)/sizeof(*stmts); it++) {
+        print_stmt(*it);
         printf("\n");
     }
 }
