@@ -20,7 +20,7 @@ Internal void* ast_dup(const void* src, size_t size) {
 }
 
 Typespec* typespec_new(TypespecKind kind) {
-    Typespec* t = (Typespec*)Global::ast_arena.alloc(sizeof(Typespec));
+    Typespec* t = (Typespec*)ast_alloc(sizeof(Typespec));
     t->kind = kind;
     return t;
 }
@@ -53,7 +53,7 @@ Typespec* typespec_func(Typespec** args, size_t num_args, Typespec* ret) {
 }
 
 Expr* expr_new(ExprKind kind) {
-    Expr* e = (Expr*)Global::ast_arena.alloc(sizeof(Expr));
+    Expr* e = (Expr*)ast_alloc(sizeof(Expr));
     e->kind = kind;
     return e;
 }
@@ -143,7 +143,7 @@ Expr* expr_ternary(Expr* cond, Expr* then_expr, Expr* else_expr) {
 }
 
 Stmt* stmt_new(StmtKind kind) {
-    Stmt* s = (Stmt*)xcalloc(1, sizeof(Stmt));
+    Stmt* s = (Stmt*)xcalloc(1, sizeof(Stmt)); //?Not ast_arena alloc?
     s->kind = kind;
     return s;
 }
@@ -228,4 +228,62 @@ Stmt* stmt_expr(Expr* expr) {
     Stmt* s = stmt_new(StmtKind::EXPR);
     s->expr = expr;
     return s;
+}
+
+Internal Decl* decl_new(DeclKind kind, const char* name) {
+    Decl* d = (Decl*)ast_alloc(sizeof(Decl));
+    d->kind = kind;
+    d->name = name;
+    return d;
+}
+
+Decl* decl_enum(const char* name, EnumItem* items, size_t num_items) {
+    Decl* d = decl_new(DeclKind::ENUM, name);
+    d->enum_decl.items = items;
+    d->enum_decl.num_items = num_items;
+    return d;
+}
+
+Decl* decl_aggregate(DeclKind kind, const char* name, AggregateItem* items, size_t num_items) {
+    assert(kind == DeclKind::STRUCT || kind == DeclKind::UNION);
+    Decl* d = decl_new(kind, name);
+    d->aggregate.items = items;
+    d->aggregate.num_items = num_items;
+    return d;
+}
+
+
+Decl* decl_union(const char* name, AggregateItem* items, size_t num_items) {
+    Decl* d = decl_new(DeclKind::UNION, name);
+    d->aggregate.items = items;
+    d->aggregate.num_items = num_items;
+    return d;
+}
+
+Decl* decl_var(const char* name, Typespec* type, Expr* expr) {
+    Decl* d = decl_new(DeclKind::VAR, name);
+    d->var.type = type;
+    d->var.expr = expr;
+    return d;
+}
+
+Decl* decl_func(const char* name, FuncParam* params, size_t num_params, Typespec* ret_type, StmtBlock block) {
+    Decl* d = decl_new(DeclKind::FUNC, name);
+    d->func.params = params;
+    d->func.num_params = num_params;
+    d->func.ret_type = ret_type;
+    d->func.block = block;
+    return d;
+}
+
+Decl* decl_const(const char* name, Expr* expr) {
+    Decl* d = decl_new(DeclKind::CONST, name);
+    d->const_decl.expr = expr;
+    return d;
+}
+
+Decl* decl_typedef(const char* name, Typespec* type) {
+    Decl* d = decl_new(DeclKind::TYPEDEF, name);
+    d->typedef_decl.type = type;
+    return d;
 }

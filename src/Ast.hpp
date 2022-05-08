@@ -49,18 +49,6 @@ Typespec* typespec_array(Typespec* elem, Expr* size);
 
 Typespec* typespec_func(Typespec** args, size_t num_args, Typespec* ret);
 
-enum class DeclKind {
-    NONE,
-    ENUM,
-    STRUCT,
-    UNION,
-    VAR,
-    CONST,
-    TYPEDEF,
-    FUNC,
-};
-
-
 enum class ExprKind {
     NONE,
     INT,
@@ -280,3 +268,87 @@ Stmt* stmt_assign(TokenKind op, Expr* left, Expr* right);
 Stmt* stmt_init(const char* name, Expr* expr);
 
 Stmt* stmt_expr(Expr* expr);
+
+enum class DeclKind {
+    NONE,
+    ENUM,
+    STRUCT,
+    UNION,
+    VAR,
+    CONST,
+    TYPEDEF,
+    FUNC,
+};
+
+struct FuncParam {
+    const char* name;
+    Typespec* type;
+};
+
+struct FuncDecl {
+    FuncParam* params;
+    size_t num_params;
+    Typespec* ret_type;
+    StmtBlock block;
+};
+
+struct EnumItem {
+    const char* name;
+    Expr* expr;
+};
+
+struct EnumDecl {
+    EnumItem* items;
+    size_t num_items;
+};
+
+struct AggregateItem {
+    const char** names;
+    size_t num_names;
+    Typespec* type;
+};
+
+struct AggregateDecl {
+    AggregateItem* items;
+    size_t num_items;
+};
+
+struct TypedefDecl {
+    Typespec* type;
+};
+
+struct VarDecl {
+    Typespec* type;
+    Expr* expr;
+};
+
+struct ConstDecl {
+    Expr* expr;
+};
+
+struct Decl {
+    DeclKind kind;
+    const char* name;
+    union {
+        EnumDecl enum_decl;
+        AggregateDecl aggregate;
+        FuncDecl func;
+        TypedefDecl typedef_decl;
+        VarDecl var;
+        ConstDecl const_decl;
+    };
+};
+
+Decl* decl_enum(const char* name, EnumItem* items, size_t num_items);
+
+Decl* decl_aggregate(DeclKind kind, const char* name, AggregateItem* items, size_t num_items);
+
+Decl* decl_union(const char* name, AggregateItem* items, size_t num_items);
+
+Decl* decl_var(const char* name, Typespec* type, Expr* expr);
+
+Decl* decl_func(const char* name, FuncParam* params, size_t num_params, Typespec* ret_type, StmtBlock block);
+
+Decl* decl_const(const char* name, Expr* expr);
+
+Decl* decl_typedef(const char* name, Typespec* type);
