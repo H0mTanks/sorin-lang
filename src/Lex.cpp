@@ -153,7 +153,7 @@ Internal size_t copy_token_kind_str(char* dest, size_t dest_size, TokenKind kind
     return n;
 }
 
-Internal const char* temp_token_kind_str(TokenKind kind) {
+const char* temp_token_kind_str(TokenKind kind) {
     LocalPersist char buf[256];
     size_t n = copy_token_kind_str(buf, sizeof(buf), kind);
     assert(n + 1 <= sizeof(buf));

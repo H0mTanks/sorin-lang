@@ -39,6 +39,16 @@ struct Typespec {
     };
 };
 
+Typespec* typespec_new(TypespecKind kind);
+
+Typespec* typespec_name(const char* name);
+
+Typespec* typespec_ptr(Typespec* elem);
+
+Typespec* typespec_array(Typespec* elem, Expr* size);
+
+Typespec* typespec_func(Typespec** args, size_t num_args, Typespec* ret);
+
 enum class DeclKind {
     NONE,
     ENUM,
@@ -96,7 +106,7 @@ struct TernaryExpr {
 };
 
 struct CallExpr {
-    Expr* name;
+    Expr* expr;
     Expr** args;
     size_t num_args;
 };
@@ -130,3 +140,29 @@ struct Expr {
         FieldExpr field;
     };
 };
+
+Expr* expr_new(ExprKind kind);
+
+Expr* expr_int(u64 int_val);
+
+Expr* expr_float(f64 float_val);
+
+Expr* expr_str(const char* str_val);
+
+Expr* expr_name(const char* name);
+
+Expr* expr_compound(Typespec* type, Expr** args, size_t num_args);
+
+Expr* expr_cast(Typespec* type, Expr* expr);
+
+Expr* expr_call(Expr* expr, Expr** args, size_t num_args);
+
+Expr* expr_index(Expr* expr, Expr* index);
+
+Expr* expr_field(Expr* expr, const char* name);
+
+Expr* expr_unary(TokenKind op, Expr* expr);
+
+Expr* expr_binary(TokenKind op, Expr* left, Expr* right);
+
+Expr* expr_ternary(Expr* cond, Expr* then_expr, Expr* else_expr);

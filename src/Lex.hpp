@@ -91,6 +91,7 @@ bool is_keyword(const char* name);
 bool match_keyword(const char* name);
 bool match_token(TokenKind kind);
 bool expect_token(TokenKind kind);
+const char* temp_token_kind_str(TokenKind kind);
 
 
 void init_stream(const char* str);
