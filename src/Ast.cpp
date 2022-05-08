@@ -141,3 +141,91 @@ Expr* expr_ternary(Expr* cond, Expr* then_expr, Expr* else_expr) {
     e->ternary.else_expr = else_expr;
     return e;
 }
+
+Stmt* stmt_new(StmtKind kind) {
+    Stmt* s = (Stmt*)xcalloc(1, sizeof(Stmt));
+    s->kind = kind;
+    return s;
+}
+
+Stmt* stmt_return(Expr* expr) {
+    Stmt* s = stmt_new(StmtKind::RETURN);
+    s->return_stmt.expr = expr;
+    return s;
+}
+
+Stmt* stmt_break() {
+    return stmt_new(StmtKind::BREAK);
+}
+
+Stmt* stmt_continue() {
+    return stmt_new(StmtKind::CONTINUE);
+}
+
+Stmt* stmt_block(StmtBlock block) {
+    Stmt* s = stmt_new(StmtKind::BLOCK);
+    s->block = block;
+    return s;
+}
+
+Stmt* stmt_if(Expr* cond, StmtBlock then_block, ElseIf* elseifs, size_t num_elseifs, StmtBlock else_block) {
+    Stmt* s = stmt_new(StmtKind::IF);
+    s->if_stmt.cond = cond;
+    s->if_stmt.then_block = then_block;
+    s->if_stmt.elseifs = elseifs;
+    s->if_stmt.num_elseifs = num_elseifs;
+    s->if_stmt.else_block = else_block;
+    return s;
+}
+
+Stmt* stmt_while(Expr* cond, StmtBlock block) {
+    Stmt* s = stmt_new(StmtKind::WHILE);
+    s->while_stmt.cond = cond;
+    s->while_stmt.block = block;
+    return s;
+}
+
+Stmt* stmt_do_while(Expr* cond, StmtBlock block) {
+    Stmt* s = stmt_new(StmtKind::DO_WHILE);
+    s->while_stmt.cond = cond;
+    s->while_stmt.block = block;
+    return s;
+}
+
+Stmt* stmt_for(Stmt* init, Expr* cond, Stmt* next, StmtBlock block) {
+    Stmt* s = stmt_new(StmtKind::FOR);
+    s->for_stmt.init = init;
+    s->for_stmt.cond = cond;
+    s->for_stmt.next = next;
+    s->for_stmt.block = block;
+    return s;
+}
+
+Stmt* stmt_switch(Expr* expr, SwitchCase* cases, size_t num_cases) {
+    Stmt* s = stmt_new(StmtKind::SWITCH);
+    s->switch_stmt.expr = expr;
+    s->switch_stmt.cases = cases;
+    s->switch_stmt.num_cases = num_cases;
+    return s;
+}
+
+Stmt* stmt_assign(TokenKind op, Expr* left, Expr* right) {
+    Stmt* s = stmt_new(StmtKind::ASSIGN);
+    s->assign.op = op;
+    s->assign.left = left;
+    s->assign.right = right;
+    return s;
+}
+
+Stmt* stmt_init(const char* name, Expr* expr) {
+    Stmt* s = stmt_new(StmtKind::INIT);
+    s->init.name = name;
+    s->init.expr = expr;
+    return s;
+}
+
+Stmt* stmt_expr(Expr* expr) {
+    Stmt* s = stmt_new(StmtKind::EXPR);
+    s->expr = expr;
+    return s;
+}
