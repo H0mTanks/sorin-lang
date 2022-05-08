@@ -291,6 +291,103 @@ void print_stmt(Stmt* stmt) {
     }
 }
 
+
+void print_aggregate_decl(Decl* decl) {
+    Decl* d = decl;
+    for (AggregateItem* it = d->aggregate.items; it != d->aggregate.items + d->aggregate.num_items; it++) {
+        print_newline();
+        printf("(");
+        print_typespec(it->type);
+        for (const char** name = it->names; name != it->names + it->num_names; name++) {
+            printf(" %s", *name);
+        }
+        printf(")");
+    }
+}
+
+void print_decl(Decl* decl) {
+    Decl* d = decl;
+    switch (d->kind) {
+        case DeclKind::ENUM:
+            printf("(enum %s", d->name);
+            indent++;
+            for (EnumItem* it = d->enum_decl.items; it != d->enum_decl.items + d->enum_decl.num_items; it++) {
+                print_newline();
+                printf("(%s ", it->name);
+                if (it->expr) {
+                    print_expr(it->expr);
+                }
+                else {
+                    printf("nil");
+                }
+                printf(")");
+            }
+            indent--;
+            printf(")");
+            break;
+        case DeclKind::STRUCT:
+            printf("(struct %s", d->name);
+            indent++;
+            print_aggregate_decl(d);
+            indent--;
+            printf(")");
+            break;
+        case DeclKind::UNION:
+            printf("(union %s", d->name);
+            indent++;
+            print_aggregate_decl(d);
+            indent--;
+            printf(")");
+            break;
+        case DeclKind::VAR:
+            printf("(var %s ", d->name);
+            if (d->var.type) {
+                print_typespec(d->var.type);
+            }
+            else {
+                printf("nil");
+            }
+            printf(" ");
+            print_expr(d->var.expr);
+            printf(")");
+            break;
+        case DeclKind::CONST:
+            printf("(const %s ", d->name);
+            print_expr(d->const_decl.expr);
+            printf(")");
+            break;
+        case DeclKind::TYPEDEF:
+            printf("(typedef %s ", d->name);
+            print_typespec(d->typedef_decl.type);
+            printf(")");
+            break;
+        case DeclKind::FUNC:
+            printf("(func %s ", d->name);
+            printf("(");
+            for (FuncParam* it = d->func.params; it != d->func.params + d->func.num_params; it++) {
+                printf(" %s ", it->name);
+                print_typespec(it->type);
+            }
+            printf(" ) ");
+            if (d->func.ret_type) {
+                print_typespec(d->func.ret_type);
+            }
+            else {
+                printf("nil");
+            }
+            indent++;
+            print_newline();
+            print_stmt_block(d->func.block);
+            indent--;
+            printf(")");
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}
+
+
 template<typename T>
 T** list(const std::initializer_list<T*>& lst) {
     return const_cast<T**>(lst.begin());
