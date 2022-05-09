@@ -143,6 +143,18 @@ void print_expr(Expr* expr) {
             printf(")");
             break;
         }
+        case ExprKind::SIZEOF: {
+            printf("sizeof ");
+            if (e->sizeof_expr.kind == SizeofKind::EXPR) {
+                print_expr(e->sizeof_expr.expr);
+            }
+            else {
+                assert(e->sizeof_expr.kind == SizeofKind::TYPE);
+                print_typespec(e->sizeof_expr.type);
+            }
+            printf(")");
+            break;
+        }
         default: {
             assert(false);
             break;
@@ -314,8 +326,8 @@ void print_decl(Decl* decl) {
             for (EnumItem* it = d->enum_decl.items; it != d->enum_decl.items + d->enum_decl.num_items; it++) {
                 print_newline();
                 printf("(%s ", it->name);
-                if (it->expr) {
-                    print_expr(it->expr);
+                if (it->init) {
+                    print_expr(it->init);
                 }
                 else {
                     printf("nil");

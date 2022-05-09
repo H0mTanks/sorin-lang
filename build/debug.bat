@@ -1,1 +1,1 @@
-remedybg ../bin/main.exe
+remedybg session.rdbg

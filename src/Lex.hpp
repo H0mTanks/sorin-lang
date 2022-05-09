@@ -93,6 +93,9 @@ bool match_token(TokenKind kind);
 bool expect_token(TokenKind kind);
 const char* temp_token_kind_str(TokenKind kind);
 
+#define IS_TOKEN(x) is_token(static_cast<TokenKind>(x))
+#define MATCH_TOKEN(x) match_token(static_cast<TokenKind>(x))
+#define EXPECT_TOKEN(x) expect_token(static_cast<TokenKind>(x))
 
 void init_stream(const char* str);
 void lex_test();

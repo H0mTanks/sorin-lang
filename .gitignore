@@ -2,5 +2,6 @@
 *.obj
 *.ilk
 *.pdb
+*.rdbg
 .vs/
 .vscode/

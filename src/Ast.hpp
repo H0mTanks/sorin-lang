@@ -1,5 +1,8 @@
+#pragma once
 #include<types.hpp>
 #include"Lex.hpp"
+
+void* ast_dup(const void* src, size_t size);
 
 struct Expr;
 struct Stmt;
@@ -63,6 +66,20 @@ enum class ExprKind {
     UNARY,
     BINARY,
     TERNARY,
+    SIZEOF,
+};
+
+enum class SizeofKind {
+    EXPR,
+    TYPE,
+};
+
+struct SizeofExpr {
+    SizeofKind kind;
+    union {
+        Expr* expr;
+        Typespec* type;
+    };
 };
 
 struct CompoundExpr {
@@ -126,6 +143,7 @@ struct Expr {
         CallExpr call;
         IndexExpr index;
         FieldExpr field;
+        SizeofExpr sizeof_expr;
     };
 };
 
@@ -154,6 +172,10 @@ Expr* expr_unary(TokenKind op, Expr* expr);
 Expr* expr_binary(TokenKind op, Expr* left, Expr* right);
 
 Expr* expr_ternary(Expr* cond, Expr* then_expr, Expr* else_expr);
+
+Expr* expr_sizeof_expr(Expr* expr);
+
+Expr* expr_sizeof_type(Typespec* type);
 
 enum class StmtKind {
     NONE,
@@ -294,7 +316,7 @@ struct FuncDecl {
 
 struct EnumItem {
     const char* name;
-    Expr* expr;
+    Expr* init;
 };
 
 struct EnumDecl {

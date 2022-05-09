@@ -9,7 +9,7 @@ Internal void* ast_alloc(size_t size) {
     return ptr;
 }
 
-Internal void* ast_dup(const void* src, size_t size) {
+void* ast_dup(const void* src, size_t size) {
     if (size == 0) {
         return nullptr;
     }
@@ -142,8 +142,22 @@ Expr* expr_ternary(Expr* cond, Expr* then_expr, Expr* else_expr) {
     return e;
 }
 
+Expr* expr_sizeof_expr(Expr* expr) {
+    Expr* e = expr_new(ExprKind::SIZEOF);
+    e->sizeof_expr.kind = SizeofKind::EXPR;
+    e->sizeof_expr.expr = expr;
+    return e;
+}
+
+Expr* expr_sizeof_type(Typespec* type) {
+    Expr* e = expr_new(ExprKind::SIZEOF);
+    e->sizeof_expr.kind = SizeofKind::TYPE;
+    e->sizeof_expr.type = type;
+    return e;
+}
+
 Stmt* stmt_new(StmtKind kind) {
-    Stmt* s = (Stmt*)xcalloc(1, sizeof(Stmt)); //?Not ast_arena alloc?
+    Stmt* s = (Stmt*)ast_alloc(sizeof(Stmt)); //?Was (Stmt*)xcalloc(1, sizeof(Stmt))
     s->kind = kind;
     return s;
 }

@@ -4,6 +4,7 @@
 #include "Globals.hpp"
 #include "Lex.hpp"
 #include "Print.hpp"
+#include "Parse.hpp"
 #include <sstream>
 
 #define ALIGN_DOWN(n, a) ((n) & ~((a) - 1))
@@ -31,5 +32,9 @@ int main() {
     }
 
     print_tests();
+
+    printf("\n\n\n");
+
+    parse_test();
 
 }
