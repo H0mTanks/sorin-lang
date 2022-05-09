@@ -143,16 +143,14 @@ Expr* expr_ternary(Expr* cond, Expr* then_expr, Expr* else_expr) {
 }
 
 Expr* expr_sizeof_expr(Expr* expr) {
-    Expr* e = expr_new(ExprKind::SIZEOF);
-    e->sizeof_expr.kind = SizeofKind::EXPR;
-    e->sizeof_expr.expr = expr;
+    Expr* e = expr_new(ExprKind::SIZEOF_EXPR);
+    e->sizeof_expr = expr;
     return e;
 }
 
 Expr* expr_sizeof_type(Typespec* type) {
-    Expr* e = expr_new(ExprKind::SIZEOF);
-    e->sizeof_expr.kind = SizeofKind::TYPE;
-    e->sizeof_expr.type = type;
+    Expr* e = expr_new(ExprKind::SIZEOF_TYPE);
+    e->sizeof_type = type;
     return e;
 }
 

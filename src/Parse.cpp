@@ -451,7 +451,7 @@ Internal Stmt* parse_stmt_for() {
     if (!IS_TOKEN(';')) {
         next = parse_simple_stmt();
         if (next->kind == StmtKind::INIT) {
-            syntax_error("Init statements not allowed in for statement's next clause");
+            syntax_error("Init statements not allowed in for-statement's next clause");
         }
     }
     EXPECT_TOKEN(')');

@@ -351,7 +351,6 @@ Internal void scan_str() {
         syntax_error("Unexpected end of file in string literal");
     }
 
-    //? do we have to allocate memory
     size_t sz = ss.str().size();
     char* str = (char*)malloc(sz + 1);
     strncpy(str, ss.str().c_str(), sz + 1);

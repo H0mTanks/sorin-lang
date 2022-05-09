@@ -18,8 +18,8 @@ enum class TypespecKind {
 };
 
 struct FuncTypespec {
-    size_t num_args;
     Typespec** args;
+    size_t num_args;
     Typespec* ret;
 };
 
@@ -34,7 +34,7 @@ struct PtrTypespec {
 
 struct Typespec {
     TypespecKind kind;
-    struct {//?not union?
+    union {
         const char* name;
         FuncTypespec func;
         ArrayTypespec array;
@@ -66,20 +66,8 @@ enum class ExprKind {
     UNARY,
     BINARY,
     TERNARY,
-    SIZEOF,
-};
-
-enum class SizeofKind {
-    EXPR,
-    TYPE,
-};
-
-struct SizeofExpr {
-    SizeofKind kind;
-    union {
-        Expr* expr;
-        Typespec* type;
-    };
+    SIZEOF_EXPR,
+    SIZEOF_TYPE,
 };
 
 struct CompoundExpr {
@@ -116,7 +104,6 @@ struct CallExpr {
     size_t num_args;
 };
 
-//?check field and index expr in dbg
 struct IndexExpr {
     Expr* expr;
     Expr* index;
@@ -135,6 +122,8 @@ struct Expr {
         const char* str_val;
         const char* name;
 
+        Expr* sizeof_expr;
+        Typespec* sizeof_type;
         CompoundExpr compound;
         CastExpr cast;
         UnaryExpr unary;
@@ -143,7 +132,6 @@ struct Expr {
         CallExpr call;
         IndexExpr index;
         FieldExpr field;
-        SizeofExpr sizeof_expr;
     };
 };
 

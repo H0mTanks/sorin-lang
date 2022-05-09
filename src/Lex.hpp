@@ -48,7 +48,7 @@ enum class TokenKind {
     DEC,
     COLON_ASSIGN,
     ADD_ASSIGN,
-    FIRST_ASSIGN = ADD_ASSIGN, //?Should be colon assign
+    FIRST_ASSIGN = ADD_ASSIGN, //*Should not be colon assign as that is parsed differently
     SUB_ASSIGN,
     OR_ASSIGN,
     AND_ASSIGN,

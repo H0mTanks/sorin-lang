@@ -143,15 +143,15 @@ void print_expr(Expr* expr) {
             printf(")");
             break;
         }
-        case ExprKind::SIZEOF: {
-            printf("sizeof ");
-            if (e->sizeof_expr.kind == SizeofKind::EXPR) {
-                print_expr(e->sizeof_expr.expr);
-            }
-            else {
-                assert(e->sizeof_expr.kind == SizeofKind::TYPE);
-                print_typespec(e->sizeof_expr.type);
-            }
+        case ExprKind::SIZEOF_EXPR: {
+            printf("(sizeof-expr ");
+            print_expr(e->sizeof_expr);
+            printf(")");
+            break;
+        }
+        case ExprKind::SIZEOF_TYPE: {
+            printf("(sizeof-type ");
+            print_typespec(e->sizeof_type);
             printf(")");
             break;
         }
