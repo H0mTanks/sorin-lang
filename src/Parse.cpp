@@ -8,18 +8,18 @@
 
 Internal Typespec* parse_type_func() {
     std::vector<Typespec*> args;
-    EXPECT_TOKEN('(');
+    expect_token(TokenKind::LPAREN);
     
-    if (!IS_TOKEN(')')) {
+    if (!is_token(TokenKind::RPAREN)) {
         args.push_back(parse_type());
-        while (MATCH_TOKEN(',')) {
+        while (match_token(TokenKind::COMMA)) {
             args.push_back(parse_type());
         }
     }
 
-    EXPECT_TOKEN(')');
+    expect_token(TokenKind::RPAREN);
     Typespec* ret = nullptr;
-    if (MATCH_TOKEN(':')) {
+    if (match_token(TokenKind::COLON)) {
         ret = parse_type();
     }
 
@@ -35,30 +35,32 @@ Internal Typespec* parse_type_base() {
     else if (match_keyword(Keywords::func_keyword)) {
         return parse_type_func();
     }
-    else if (MATCH_TOKEN('(')) {
-        return parse_type();
+    else if (match_token(TokenKind::LPAREN)) {
+        Typespec* type = parse_type();
+        expect_token(TokenKind::RPAREN);
+        return type;
     }
 
-    fatal_syntax_error("Unexpected token %s in type", temp_token_kind_str(Global::token.kind));
+    fatal_syntax_error("Unexpected token %s in type", token_info());
     return nullptr;
 }
 
 Typespec* parse_type() {
     Typespec* type = parse_type_base();
 
-    while (IS_TOKEN('[') || IS_TOKEN('*')) {
-        if (MATCH_TOKEN('[')) {
+    while (is_token(TokenKind::LBRACKET) || is_token(TokenKind::MUL)) {
+        if (match_token(TokenKind::LBRACKET)) {
             Expr* expr = nullptr;
 
-            if (!IS_TOKEN(']')) {
+            if (!is_token(TokenKind::RBRACKET)) {
                 expr = parse_expr();
             }
 
-            EXPECT_TOKEN(']');
+            expect_token(TokenKind::RBRACKET);
             type = typespec_array(type, expr);
         }
         else {
-            assert(IS_TOKEN('*'));
+            assert(is_token(TokenKind::MUL));
             next_token();
             type = typespec_ptr(type);
         }
@@ -68,17 +70,17 @@ Typespec* parse_type() {
 }
 
 Internal Expr* parse_expr_compound(Typespec* type) {
-    EXPECT_TOKEN('{');
+    expect_token(TokenKind::LBRACE);
     std::vector<Expr*> args;
 
-    if (!IS_TOKEN('}')) {
+    if (!is_token(TokenKind::RBRACE)) {
         args.push_back(parse_expr());
-        while (MATCH_TOKEN(',')) {
+        while (match_token(TokenKind::COMMA)) {
             args.push_back(parse_expr());
         }
     }
 
-    EXPECT_TOKEN('}');
+    expect_token(TokenKind::RBRACE);
     return expr_compound(type, (Expr**)ast_dup(args.data(), args.size() * sizeof(Expr*)), args.size());
 }
 
@@ -101,7 +103,7 @@ Internal Expr* parse_expr_operand() {
     else if (is_token(TokenKind::NAME)) {
         const char* name = Global::token.name;
         next_token();
-        if (IS_TOKEN('{')) {
+        if (is_token(TokenKind::LBRACE)) {
             return parse_expr_compound(typespec_name(name));
         }
         else {
@@ -109,60 +111,60 @@ Internal Expr* parse_expr_operand() {
         }
     }
     else if (match_keyword(Keywords::sizeof_keyword)) {
-        EXPECT_TOKEN('(');
-        if (MATCH_TOKEN(':')) {
+        expect_token(TokenKind::LPAREN);
+        if (match_token(TokenKind::COLON)) {
             Typespec* type = parse_type();
-            EXPECT_TOKEN(')');
+            expect_token(TokenKind::RPAREN);
             return expr_sizeof_type(type);
         }
         else {
             Expr* expr = parse_expr();
-            EXPECT_TOKEN(')');
+            expect_token(TokenKind::RPAREN);
             return expr_sizeof_expr(expr);
         }
     }
-    else if (IS_TOKEN('{')) {
+    else if (is_token(TokenKind::LBRACE)) {
         return parse_expr_compound(nullptr);
     }
-    else if (MATCH_TOKEN('(')) {
-        if (IS_TOKEN(':')) { //?typecast?
+    else if (match_token(TokenKind::LPAREN)) {
+        if (match_token(TokenKind::COLON)) {
             Typespec* type = parse_type();
-            EXPECT_TOKEN(')');
+            expect_token(TokenKind::RPAREN);
             return parse_expr_compound(type);
         }
         else {
             Expr* expr = parse_expr();
-            EXPECT_TOKEN(')');
+            expect_token(TokenKind::RPAREN);
             return expr;
         }
     }
 
-    fatal_syntax_error("Unexpected token %s in expression", temp_token_kind_str(Global::token.kind));
+    fatal_syntax_error("Unexpected token %s in expression", token_info());
     return nullptr;
 }
 
 Internal Expr* parse_expr_base() {
     Expr* expr = parse_expr_operand();
-    while (IS_TOKEN('(') || IS_TOKEN('[') || IS_TOKEN('.')) {
-        if (MATCH_TOKEN('(')) {
+    while (is_token(TokenKind::LPAREN) || is_token(TokenKind::LBRACKET) || is_token(TokenKind::DOT)) {
+        if (match_token(TokenKind::LPAREN)) {
             std::vector<Expr*> args;
-            if (!IS_TOKEN(')')) {
+            if (!is_token(TokenKind::RPAREN)) {
                 args.push_back(parse_expr());
-                while (MATCH_TOKEN(',')) {
+                while (match_token(TokenKind::COMMA)) {
                     args.push_back(parse_expr());
                 }
             }
 
-            EXPECT_TOKEN(')');
+            expect_token(TokenKind::RPAREN);
             expr = expr_call(expr, (Expr**)ast_dup(args.data(), args.size() * sizeof(Expr*)), args.size());
         }
-        else if (MATCH_TOKEN('[')) {
+        else if (match_token(TokenKind::LBRACKET)) {
             Expr* index = parse_expr();
-            EXPECT_TOKEN(']');
+            expect_token(TokenKind::RBRACKET);
             expr = expr_index(expr, index);
         }
         else {
-            assert(IS_TOKEN('.'));
+            assert(is_token(TokenKind::DOT));
             next_token();
             const char* field = Global::token.name;
             expect_token(TokenKind::NAME);
@@ -174,7 +176,7 @@ Internal Expr* parse_expr_base() {
 }
 
 Internal bool is_unary_op() {
-    return IS_TOKEN('+') || IS_TOKEN('-') || IS_TOKEN('*') || IS_TOKEN('&');
+    return is_token(TokenKind::ADD) || is_token(TokenKind::SUB) || is_token(TokenKind::MUL) || is_token(TokenKind::BAND);
 }
 
 Internal Expr* parse_expr_unary() {
@@ -188,7 +190,7 @@ Internal Expr* parse_expr_unary() {
 }
 
 Internal bool is_mul_op() {
-    return IS_TOKEN('*') || IS_TOKEN('/') || IS_TOKEN('%') || IS_TOKEN('&') || is_token(TokenKind::LSHIFT) || is_token(TokenKind::RSHIFT);
+    return TokenKind::FIRST_MUL <= Global::token.kind && Global::token.kind <= TokenKind::LAST_MUL;
 }
 
 Internal Expr* parse_expr_mul() {
@@ -203,7 +205,7 @@ Internal Expr* parse_expr_mul() {
 }
 
 Internal bool is_add_op() {
-    return IS_TOKEN('+') || IS_TOKEN('-') || IS_TOKEN('|') || IS_TOKEN('^');
+    return TokenKind::FIRST_ADD <= Global::token.kind && Global::token.kind <= TokenKind::LAST_ADD;
 }
 
 Internal Expr* parse_expr_add() {
@@ -218,7 +220,7 @@ Internal Expr* parse_expr_add() {
 }
 
 Internal bool is_cmp_op() {
-    return IS_TOKEN('<') || IS_TOKEN('>') || is_token(TokenKind::EQ) || is_token(TokenKind::NOTEQ) || is_token(TokenKind::GTEQ) || is_token(TokenKind::LTEQ);
+    return TokenKind::FIRST_CMP <= Global::token.kind && Global::token.kind <= TokenKind::LAST_CMP;
 }
 
 Internal Expr* parse_expr_cmp() {
@@ -250,9 +252,9 @@ Internal Expr* parse_expr_or() {
 
 Internal Expr* parse_expr_ternary() {
     Expr* expr = parse_expr_or();
-    if (MATCH_TOKEN('?')) {
+    if (match_token(TokenKind::QUESTION)) {
         Expr* then_expr = parse_expr_ternary();
-        EXPECT_TOKEN(':');
+        expect_token(TokenKind::COLON);
         Expr* else_expr = parse_expr_ternary();
         expr = expr_ternary(expr, then_expr, else_expr);
     }
@@ -265,9 +267,9 @@ Expr* parse_expr() {
 }
 
 Internal Expr* parse_paren_expr() {
-    EXPECT_TOKEN('(');
+    expect_token(TokenKind::LPAREN);
     Expr* expr = parse_expr();
-    EXPECT_TOKEN(')');
+    expect_token(TokenKind::RPAREN);
     return expr;
 }
 
@@ -281,7 +283,7 @@ Internal EnumItem parse_decl_enum_item() {
     const char* name = parse_name();
 
     Expr* init = nullptr;
-    if (MATCH_TOKEN('=')) {
+    if (match_token(TokenKind::ASSIGN)) {
         init = parse_expr();
     }
 
@@ -291,17 +293,17 @@ Internal EnumItem parse_decl_enum_item() {
 Internal Decl* parse_decl_enum() {
     const char* name = parse_name();
     
-    EXPECT_TOKEN('{');
+    expect_token(TokenKind::LBRACE);
 
     std::vector<EnumItem> items;
-    if (!IS_TOKEN('}')) {
+    if (!is_token(TokenKind::RBRACE)) {
         items.push_back(parse_decl_enum_item());
-        while (MATCH_TOKEN(',')) {
+        while (match_token(TokenKind::COMMA)) {
             items.push_back(parse_decl_enum_item());
         }
     }
 
-    EXPECT_TOKEN('}');
+    expect_token(TokenKind::RBRACE);
     return decl_enum(name, (EnumItem*)ast_dup(items.data(), items.size() * sizeof(EnumItem)), items.size());
 }
 
@@ -309,27 +311,27 @@ Internal AggregateItem parse_decl_aggregate_item() {
     std::vector<const char*> names;
     names.push_back(parse_name());
 
-    while (MATCH_TOKEN(',')) {
+    while (match_token(TokenKind::COMMA)) {
         names.push_back(parse_name());
     }
 
-    EXPECT_TOKEN(':');
+    expect_token(TokenKind::COLON);
     Typespec* type = parse_type();
     
-    EXPECT_TOKEN(';');
+    expect_token(TokenKind::SEMICOLON);
     return AggregateItem{(const char**)ast_dup(names.data(), names.size() * sizeof(const char*)), names.size(), type};
 }
 
 Internal Decl* parse_decl_aggregate(DeclKind kind) {
     assert(kind == DeclKind::STRUCT || kind == DeclKind::UNION);
     const char* name = parse_name();
-    EXPECT_TOKEN('{');
+    expect_token(TokenKind::LBRACE);
 
     std::vector<AggregateItem> items;
-    while (!is_token_eof() && !IS_TOKEN('}')) {
+    while (!is_token_eof() && !is_token(TokenKind::RBRACE)) {
         items.push_back(parse_decl_aggregate_item());
     }
-    EXPECT_TOKEN('}');
+    expect_token(TokenKind::RBRACE);
 
     return decl_aggregate(kind, name, (AggregateItem*)ast_dup(items.data(), items.size() * sizeof(AggregateItem)), items.size());
 }
@@ -337,31 +339,31 @@ Internal Decl* parse_decl_aggregate(DeclKind kind) {
 Internal Decl* parse_decl_var() {
     const char* name = parse_name();
 
-    if (MATCH_TOKEN('=')) {
+    if (match_token(TokenKind::ASSIGN)) {
         return decl_var(name, nullptr, parse_expr());
     }
-    else if (MATCH_TOKEN(':')) {
+    else if (match_token(TokenKind::COLON)) {
         Typespec* type = parse_type();
         Expr* expr = nullptr;
-        if (MATCH_TOKEN('=')) {
+        if (match_token(TokenKind::ASSIGN)) {
             expr = parse_expr();
         }
         return decl_var(name, type, expr);
     }
 
-    fatal_syntax_error("Expected ':' or '=' after var, got %s", temp_token_kind_str(Global::token.kind));
+    fatal_syntax_error("Expected TokenKind::COLON or '=' after var, got %s", token_info());
     return nullptr;
 }
 
 Internal Decl* parse_decl_const() {
     const char* name = parse_name();
-    EXPECT_TOKEN('=');
+    expect_token(TokenKind::ASSIGN);
     return decl_const(name, parse_expr());
 }
 
 Internal Decl* parse_decl_typedef() {
     const char* name = parse_name();
-    EXPECT_TOKEN('=');
+    expect_token(TokenKind::ASSIGN);
     return decl_typedef(name, parse_type());
 }
 
@@ -397,8 +399,8 @@ Stmt* parse_stmt_do_while() {
     }
 
     Expr* cond = parse_paren_expr();
-    Stmt* stmt = stmt_do_while(cond, block); //?different in stream
-    EXPECT_TOKEN(';');
+    Stmt* stmt = stmt_do_while(cond, block);
+    expect_token(TokenKind::SEMICOLON);
     return stmt;
 }
 
@@ -434,27 +436,27 @@ Internal Stmt* parse_simple_stmt() {
 }
 
 Internal Stmt* parse_stmt_for() {
-    EXPECT_TOKEN('(');
+    expect_token(TokenKind::LPAREN);
     Stmt* init = nullptr;
-    if (!IS_TOKEN(';')) {
+    if (!is_token(TokenKind::SEMICOLON)) {
         init = parse_simple_stmt();
     }
-    EXPECT_TOKEN(';');
+    expect_token(TokenKind::SEMICOLON);
 
     Expr* cond = nullptr;
-    if (!IS_TOKEN(';')) {
+    if (!is_token(TokenKind::SEMICOLON)) {
         cond = parse_expr();
     }
-    EXPECT_TOKEN(';');
+    expect_token(TokenKind::SEMICOLON);
 
     Stmt* next = nullptr;
-    if (!IS_TOKEN(';')) {
+    if (!is_token(TokenKind::SEMICOLON)) {
         next = parse_simple_stmt();
         if (next->kind == StmtKind::INIT) {
             syntax_error("Init statements not allowed in for-statement's next clause");
         }
     }
-    EXPECT_TOKEN(')');
+    expect_token(TokenKind::RPAREN);
 
     return stmt_for(init, cond, next, parse_stmt_block());
 }
@@ -478,10 +480,10 @@ Internal SwitchCase parse_stmt_switch_case() {
         }
     }
 
-    EXPECT_TOKEN(':');
+    expect_token(TokenKind::COLON);
 
     std::vector<Stmt*> stmts;
-    while (!is_token_eof() && !IS_TOKEN('}') && !is_keyword(Keywords::case_keyword) && !is_keyword(Keywords::default_keyword)) {
+    while (!is_token_eof() && !is_token(TokenKind::RBRACE) && !is_keyword(Keywords::case_keyword) && !is_keyword(Keywords::default_keyword)) {
         stmts.push_back(parse_stmt());
     }
 
@@ -493,12 +495,12 @@ Internal SwitchCase parse_stmt_switch_case() {
 Internal Stmt* parse_stmt_switch() {
     Expr* expr = parse_paren_expr();
     std::vector<SwitchCase> cases;
-    EXPECT_TOKEN('{');
+    expect_token(TokenKind::LBRACE);
 
-    while (!is_token_eof() && !IS_TOKEN('}')) {
+    while (!is_token_eof() && !is_token(TokenKind::RBRACE)) {
         cases.push_back(parse_stmt_switch_case());
     }
-    EXPECT_TOKEN('}');
+    expect_token(TokenKind::RBRACE);
 
     return stmt_switch(expr, (SwitchCase*)ast_dup(cases.data(), cases.size() * sizeof(SwitchCase)), cases.size());
 }
@@ -521,60 +523,60 @@ Stmt* parse_stmt() {
     else if (match_keyword(switch_keyword)) {
         return parse_stmt_switch();
     }
-    else if (IS_TOKEN('{')) {
+    else if (is_token(TokenKind::LBRACE)) {
         return stmt_block(parse_stmt_block());
     }
     else if (match_keyword(return_keyword)) {
         Stmt* stmt = stmt_return(parse_expr());
-        EXPECT_TOKEN(';');
+        expect_token(TokenKind::SEMICOLON);
         return stmt;
     }
     else if (match_keyword(break_keyword)) {
-        EXPECT_TOKEN(';');
+        expect_token(TokenKind::SEMICOLON);
         return stmt_break();
     }
     else if (match_keyword(continue_keyword)) {
-        EXPECT_TOKEN(';');
+        expect_token(TokenKind::SEMICOLON);
         return stmt_continue();
     }
 
     Stmt* stmt = parse_simple_stmt();
-    EXPECT_TOKEN(';');
+    expect_token(TokenKind::SEMICOLON);
     return stmt;
 }
 
 StmtBlock parse_stmt_block() {
-    EXPECT_TOKEN('{');
+    expect_token(TokenKind::LBRACE);
     std::vector<Stmt*> stmts;
-    while (!is_token_eof() && !IS_TOKEN('}')) {
+    while (!is_token_eof() && !is_token(TokenKind::RBRACE)) {
         stmts.push_back(parse_stmt());
     }
 
-    EXPECT_TOKEN('}');
+    expect_token(TokenKind::RBRACE);
     return StmtBlock{(Stmt**)ast_dup(stmts.data(), stmts.size() * sizeof(Stmt*)), stmts.size()};
 }
 
 Internal FuncParam parse_decl_func_param() {
     const char* name = parse_name();
-    EXPECT_TOKEN(':');
+    expect_token(TokenKind::COLON);
     return FuncParam{name, parse_type()};
 }
 
 Internal Decl* parse_decl_func() {
     const char* name = parse_name();
-    EXPECT_TOKEN('(');
+    expect_token(TokenKind::LPAREN);
 
     std::vector<FuncParam> params;
-    if (!IS_TOKEN(')')) {
+    if (!is_token(TokenKind::RPAREN)) {
         params.push_back(parse_decl_func_param());
-        while (MATCH_TOKEN(',')) {
+        while (match_token(TokenKind::COMMA)) {
             params.push_back(parse_decl_func_param());
         }
     }
 
-    EXPECT_TOKEN(')');
+    expect_token(TokenKind::RPAREN);
     Typespec* ret_type = nullptr;
-    if (MATCH_TOKEN(':')) {
+    if (match_token(TokenKind::COLON)) {
         ret_type = parse_type();
     }
 
@@ -607,7 +609,7 @@ Decl* parse_decl() {
         return parse_decl_func();
     }
 
-    fatal_syntax_error("Expected declaration keyword, got %s", temp_token_kind_str(Global::token.kind));
+    fatal_syntax_error("Expected declaration keyword, got %s", token_info());
     return nullptr;
 }
 

@@ -23,7 +23,7 @@ void print_typespec(Typespec* type) {
                 print_typespec(*it);
             }
 
-            printf(") ");
+            printf(" ) ");
             print_typespec(t->func.ret);
             printf(")");
             break;
@@ -120,13 +120,13 @@ void print_expr(Expr* expr) {
             break;
         }
         case ExprKind::UNARY: {
-            printf("(%s ", temp_token_kind_str(e->unary.op));
+            printf("(%s ", token_kind_name(e->unary.op));
             print_expr(e->unary.expr);
             printf(")");
             break;
         }
         case ExprKind::BINARY: {
-            printf("(%s ", temp_token_kind_str(e->binary.op));
+            printf("(%s ", token_kind_name(e->binary.op));
             print_expr(e->binary.left);
             printf(" ");
             print_expr(e->binary.right);
@@ -277,7 +277,7 @@ void print_stmt(Stmt* stmt) {
             break;
         }
         case StmtKind::ASSIGN: {
-            printf("(%s ", temp_token_kind_str(s->assign.op));//?different in sorin_old
+            printf("(%s ", token_kind_name(s->assign.op));
             print_expr(s->assign.left);
             if (s->assign.right) {
                 printf(" ");

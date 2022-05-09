@@ -74,21 +74,21 @@ Internal void init() {
 #undef KEYWORD
 
 
-Internal bool is_keyword_str(const char* str) {
-    return first_keyword <= str && str <= last_keyword;
+Internal bool is_keyword_name(const char* name) {
+    return first_keyword <= name && name <= last_keyword;
 }
 
 
 Internal void keywords_test() {
     init();
-    assert(is_keyword_str(first_keyword));
-    assert(is_keyword_str(last_keyword));
+    assert(is_keyword_name(first_keyword));
+    assert(is_keyword_name(last_keyword));
 
     for (const char* word : Global::keywords) {
-        assert(is_keyword_str(word));
+        assert(is_keyword_name(word));
     }
 
-    assert(!is_keyword_str(Global::string_table.add("foo")));
+    assert(!is_keyword_name(Global::string_table.add("foo")));
 }
 
 Internal void init_token_kind_names() {
@@ -100,21 +100,41 @@ Internal void init_token_kind_names() {
     }
 
     token_kind_names[(int)TokenKind::END_OF_FILE] = "EOF";
+    token_kind_names[(int)TokenKind::COLON] = ":",
+    token_kind_names[(int)TokenKind::LPAREN] = "(",
+    token_kind_names[(int)TokenKind::RPAREN] = ")",
+    token_kind_names[(int)TokenKind::LBRACE] = "{",
+    token_kind_names[(int)TokenKind::RBRACE] = "}",
+    token_kind_names[(int)TokenKind::LBRACKET] = "[",
+    token_kind_names[(int)TokenKind::RBRACKET] = "]",
+    token_kind_names[(int)TokenKind::COMMA] = ",",
+    token_kind_names[(int)TokenKind::DOT] = ".",
+    token_kind_names[(int)TokenKind::QUESTION] = "?",
+    token_kind_names[(int)TokenKind::SEMICOLON] = ";",
+    token_kind_names[(int)TokenKind::KEYWORD] = "keyword",
     token_kind_names[(int)TokenKind::INT] = "int";
     token_kind_names[(int)TokenKind::FLOAT] = "float";
     token_kind_names[(int)TokenKind::STR] = "string";
     token_kind_names[(int)TokenKind::NAME] = "name";
+    token_kind_names[(int)TokenKind::MUL] = "*",
+    token_kind_names[(int)TokenKind::DIV] = "/",
+    token_kind_names[(int)TokenKind::MOD] = "%",
+    token_kind_names[(int)TokenKind::BAND] = "&",
     token_kind_names[(int)TokenKind::LSHIFT] = "<<";
     token_kind_names[(int)TokenKind::RSHIFT] = ">>";
+    token_kind_names[(int)TokenKind::ADD] = "+",
+    token_kind_names[(int)TokenKind::SUB] = "-",
+    token_kind_names[(int)TokenKind::BOR] = "|",
+    token_kind_names[(int)TokenKind::XOR] = "^",
     token_kind_names[(int)TokenKind::EQ] = "==";
     token_kind_names[(int)TokenKind::NOTEQ] = "!=";
+    token_kind_names[(int)TokenKind::LT] = "<",
+    token_kind_names[(int)TokenKind::GT] = ">",
     token_kind_names[(int)TokenKind::LTEQ] = "<=";
     token_kind_names[(int)TokenKind::GTEQ] = ">=";
     token_kind_names[(int)TokenKind::AND] = "&&";
     token_kind_names[(int)TokenKind::OR] = "||";
-    token_kind_names[(int)TokenKind::INC] = "++";
-    token_kind_names[(int)TokenKind::DEC] = "--";
-    token_kind_names[(int)TokenKind::COLON_ASSIGN] = ":=";
+    token_kind_names[(int)TokenKind::ASSIGN] = "=",
     token_kind_names[(int)TokenKind::ADD_ASSIGN] = "+=";
     token_kind_names[(int)TokenKind::SUB_ASSIGN] = "-=";
     token_kind_names[(int)TokenKind::OR_ASSIGN] = "|=";
@@ -125,43 +145,31 @@ Internal void init_token_kind_names() {
     token_kind_names[(int)TokenKind::MUL_ASSIGN] = "*=";
     token_kind_names[(int)TokenKind::DIV_ASSIGN] = "/=";
     token_kind_names[(int)TokenKind::MOD_ASSIGN] = "%=";
+    token_kind_names[(int)TokenKind::INC] = "++";
+    token_kind_names[(int)TokenKind::DEC] = "--";
+    token_kind_names[(int)TokenKind::COLON_ASSIGN] = ":=";
 }
 
-Internal const char* token_kind_name(TokenKind kind) {
+const char* token_kind_name(TokenKind kind) {
     if ((int)kind < Global::token_kind_names.size()) {
         return Global::token_kind_names[(int)kind];
     }
     else {
-        return nullptr;
+        return "<unknown>";
     }
 }
 
-Internal size_t copy_token_kind_str(char* dest, size_t dest_size, TokenKind kind) {
-    size_t n = 0;
-    const char* name = token_kind_name(kind);
-
-    if (name) {
-        n = snprintf(dest, dest_size, "%s", name);
-    }
-    else if (static_cast<int>(kind) < 128 && isprint(static_cast<int>(kind))) {
-        n = snprintf(dest, dest_size, "%c", static_cast<int>(kind));
+const char* token_info()
+{
+    if (Global::token.kind == TokenKind::NAME || Global::token.kind == TokenKind::KEYWORD) {
+        return Global::token.name;
     }
     else {
-        n = snprintf(dest, dest_size, "<ASCII %d>", static_cast<int>(kind));
+        return token_kind_name(Global::token.kind);
     }
-
-    return n;
 }
 
-const char* temp_token_kind_str(TokenKind kind) {
-    LocalPersist char buf[256];
-    size_t n = copy_token_kind_str(buf, sizeof(buf), kind);
-    assert(n + 1 <= sizeof(buf));
-    return buf;
-}
-
-
-Internal u8 hex_char_to_digit(char c) {
+Internal u8 hex_char_to_digit(u8 c) {
     if (c >= '0' && c <= '9') {
         return c - '0';
     }
@@ -201,7 +209,7 @@ Internal void scan_int() {
 
     u64 val = 0;
     while (true) {
-        char c = *Global::stream;
+        u8 c = *(u8*)Global::stream;
         u64 digit = hex_char_to_digit(c);
         
         if (digit == 0 && *Global::stream != '0') {
@@ -260,14 +268,14 @@ Internal void scan_float() {
 
     //*we now have a valid float in the stream
     f64 val = strtod(start,  nullptr);
-    if (val == HUGE_VAL || val == -HUGE_VAL) {
+    if (val == HUGE_VAL) {
         syntax_error("Float literal overflow");
     }
     token.kind = TokenKind::FLOAT;
     token.float_val = val;
 }
 
-Internal char char_to_escape(char c) {
+Internal char char_to_escape(u8 c) {
     switch(c) {
         case 'n': return '\n';
         case 'r': return '\r';
@@ -296,7 +304,7 @@ Internal void scan_char() {
     }
     else if (*stream == '\\') {
         stream++;
-        val = char_to_escape(*stream);
+        val = char_to_escape(*(u8*)stream);
         if (val == 0 && *stream != '0') {
             syntax_error("Invalid char literal escape '\\%c'", *stream);
         }
@@ -333,7 +341,7 @@ Internal void scan_str() {
         }
         else if (val == '\\') {
             stream++;
-            val = char_to_escape(*stream);
+            val = char_to_escape(*(u8*)stream);
             if (val == 0 && *stream != '0') {
                 syntax_error("Invalid string literal escape char '\\%c'", *stream);
             }
@@ -359,28 +367,33 @@ Internal void scan_str() {
     token.str_val = str;
 }
 
-Internal TokenKind op_single_kind(char op1, char op2, TokenKind other_kind) {
-    TokenKind kind = static_cast<TokenKind>(op1); // *Global::stream is op1
+Internal TokenKind op_single_kind(TokenKind kind) {
+    Global::stream++;
+    return kind;
+}
+
+Internal TokenKind op_double_kind(char op1, TokenKind kind1, char op2, TokenKind kind2) {
+    TokenKind kind = kind1; // *Global::stream is op1
     Global::stream++;
 
     if (*Global::stream == op2) {
-        kind = other_kind;
+        kind = kind2;
         Global::stream++;
     }
 
     return kind;
 }
 
-Internal TokenKind op_double_kind(char op1, char op2, TokenKind first_kind, char op3, TokenKind second_kind) {
-    TokenKind kind = static_cast<TokenKind>(op1); // *Global::stream is op1
+Internal TokenKind op_triple_kind(char op1, TokenKind kind1, char op2, TokenKind kind2, char op3, TokenKind kind3) {
+    TokenKind kind = kind1; // *Global::stream is op1
     Global::stream++;
 
     if (*Global::stream == op2) {
-        kind = first_kind;
+        kind = kind2;
         Global::stream++;
     }
     else if (*Global::stream == op3) {
-        kind = second_kind;
+        kind = kind3;
         Global::stream++;
     }
 
@@ -389,6 +402,7 @@ Internal TokenKind op_double_kind(char op1, char op2, TokenKind first_kind, char
 
 void next_token() {
     using namespace Global;
+repeat:
     //get to start of each token
     while(isspace(*stream)) {
         stream++;
@@ -407,7 +421,13 @@ void next_token() {
             break;
         }
         case '.': {
-            scan_float();
+            if (isdigit(Global::stream[1])) {
+                scan_float();
+            }
+            else {
+                Global::token.kind = TokenKind::DOT;
+                Global::stream++;
+            }
             break;
         }
         case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
@@ -438,12 +458,12 @@ void next_token() {
                 stream++;
             }
             token.name = string_table.add_range(token.start, stream);
-            token.kind = is_keyword_str(token.name) ? TokenKind::KEYWORD : TokenKind::NAME;
+            token.kind = is_keyword_name(token.name) ? TokenKind::KEYWORD : TokenKind::NAME;
             break;
         }
         //*operators
         case '<': {
-            token.kind = static_cast<TokenKind>(*stream);
+            token.kind = TokenKind::LT;
             stream++;
 
             if (*stream == '<') {
@@ -462,7 +482,7 @@ void next_token() {
             break;
         }
         case '>': {
-            token.kind = static_cast<TokenKind>(*stream);
+            token.kind = TokenKind::GT;
             stream++;
 
             if (*stream == '>') {
@@ -480,58 +500,90 @@ void next_token() {
             }
             break;
         }
-        case '=': {
-            token.kind = op_single_kind('=', '=', TokenKind::EQ);
-            // token.kind = static_cast<TokenKind>(*stream);
-            // stream++;
-
-            // if (*stream == '=') {
-            //     token.kind = TokenKind::EQ;
-            //     stream++;
-            // }
+        case '\0': {
+            token.kind = op_single_kind(TokenKind::END_OF_FILE);
             break;
         }
-        case '^': {
-            token.kind = op_single_kind('^', '=', TokenKind::XOR_ASSIGN);
+        case '(': {
+            token.kind = op_single_kind(TokenKind::LPAREN);
+            break;
+        }
+        case ')': {
+            token.kind = op_single_kind(TokenKind::RPAREN);
+            break;
+        }
+        case '{': {
+            token.kind = op_single_kind(TokenKind::LBRACE);
+            break;
+        }
+        case '}': {
+            token.kind = op_single_kind(TokenKind::RBRACE);
+            break;
+        }
+        case '[': {
+            token.kind = op_single_kind(TokenKind::LBRACKET);
+            break;
+        }
+        case ']': {
+            token.kind = op_single_kind(TokenKind::RBRACKET);
+            break;
+        }
+        case ',': {
+            token.kind = op_single_kind(TokenKind::COMMA);
+            break;
+        }
+        case '?': {
+            token.kind = op_single_kind(TokenKind::QUESTION);
+            break;
+        }
+        case ';': {
+            token.kind = op_single_kind(TokenKind::SEMICOLON);
             break;
         }
         case ':': {
-            token.kind = op_single_kind(':', '=', TokenKind::COLON_ASSIGN);
+            token.kind = op_double_kind(':', TokenKind::COLON, '=', TokenKind::COLON_ASSIGN);
+            break;
+        }
+        case '=': {
+            token.kind = op_double_kind('=', TokenKind::ASSIGN, '=', TokenKind::EQ);
+            break;
+        }
+        case '^': {
+            token.kind = op_double_kind('^', TokenKind::XOR, '=', TokenKind::XOR_ASSIGN);
             break;
         }
         case '*': {
-            token.kind = op_single_kind('*', '=', TokenKind::MUL_ASSIGN);
+            token.kind = op_double_kind('*', TokenKind::MUL, '=', TokenKind::MUL_ASSIGN);
             break;
         }
         case '/': {
-            token.kind = op_single_kind('/', '=', TokenKind::DIV_ASSIGN);
+            token.kind = op_double_kind('/', TokenKind::DIV, '=', TokenKind::DIV_ASSIGN);
             break;
         }
         case '%': {
-            token.kind = op_single_kind('%', '=', TokenKind::MOD_ASSIGN);
+            token.kind = op_double_kind('%', TokenKind::MOD, '=', TokenKind::MOD_ASSIGN);
             break;
         }
         case '+': {
-            token.kind = op_double_kind('+', '=', TokenKind::ADD_ASSIGN, '+', TokenKind::INC);
+            token.kind = op_triple_kind('+', TokenKind::ADD, '=', TokenKind::ADD_ASSIGN, '+', TokenKind::INC);
             break;
         }
         case '-': {
-            token.kind = op_double_kind('-', '=', TokenKind::SUB_ASSIGN, '-', TokenKind::DEC);
+            token.kind = op_triple_kind('-', TokenKind::SUB, '=', TokenKind::SUB_ASSIGN, '-', TokenKind::DEC);
             break;
         }
         case '&': {
-            token.kind = op_double_kind('&', '=', TokenKind::AND_ASSIGN, '&', TokenKind::AND);
+            token.kind = op_triple_kind('&', TokenKind::BAND, '=', TokenKind::AND_ASSIGN, '&', TokenKind::AND);
             break;
         }
         case '|': {
-            token.kind = op_double_kind('|', '=', TokenKind::OR_ASSIGN, '&', TokenKind::OR);
+            token.kind = op_triple_kind('|', TokenKind::BOR, '=', TokenKind::OR_ASSIGN, '&', TokenKind::OR);
             break;
         }
         default: {
-            //*stream is null terminated so eof will be automatically put in tokenkind
-            token.kind = static_cast<TokenKind>(*stream);
+            syntax_error("Invalid '%c' token character, skipping", *stream);
             stream++;
-            break;
+            goto repeat;
         }
     }
 
@@ -586,9 +638,7 @@ bool expect_token(TokenKind kind)
         return true;
     }
     else {
-        char buf[256];
-        copy_token_kind_str(buf, sizeof(buf), kind);
-        fatal("Expected token: %s, got: %s", buf, temp_token_kind_str(Global::token.kind));
+        fatal("Expected token: %s, got: %s", token_kind_name(kind), token_info());
         return false;
     }
 }
@@ -645,12 +695,12 @@ void lex_test() {
 
     //*operator tests
     init_stream(": := + += ++ < <= << <<=");
-    ASSERT_TOKEN(':');
+    ASSERT_TOKEN(TokenKind::COLON);
     ASSERT_TOKEN(TokenKind::COLON_ASSIGN);
-    ASSERT_TOKEN('+');
+    ASSERT_TOKEN(TokenKind::ADD);
     ASSERT_TOKEN(TokenKind::ADD_ASSIGN);
     ASSERT_TOKEN(TokenKind::INC);
-    ASSERT_TOKEN('<');
+    ASSERT_TOKEN(TokenKind::LT);
     ASSERT_TOKEN(TokenKind::LTEQ);
     ASSERT_TOKEN(TokenKind::LSHIFT);
     ASSERT_TOKEN(TokenKind::LSHIFT_ASSIGN);
@@ -659,14 +709,14 @@ void lex_test() {
     //*misc tests
     init_stream("XY+(XY)_HELLO1,234+994");
     ASSERT_TOKEN_NAME("XY");
-    ASSERT_TOKEN('+');
-    ASSERT_TOKEN('(');
+    ASSERT_TOKEN(TokenKind::ADD);
+    ASSERT_TOKEN(TokenKind::LPAREN);
     ASSERT_TOKEN_NAME("XY");
-    ASSERT_TOKEN(')');
+    ASSERT_TOKEN(TokenKind::RPAREN);
     ASSERT_TOKEN_NAME("_HELLO1");
-    ASSERT_TOKEN(',');
+    ASSERT_TOKEN(TokenKind::COMMA);
     ASSERT_TOKEN_INT(234);
-    ASSERT_TOKEN('+');
+    ASSERT_TOKEN(TokenKind::ADD);
     ASSERT_TOKEN_INT(994);
     ASSERT_TOKEN_EOF();
 }

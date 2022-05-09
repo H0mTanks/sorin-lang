@@ -28,27 +28,54 @@ namespace Keywords {
 };
 
 enum class TokenKind {
-    END_OF_FILE = 0,
-    //*Reserve first 128 values for one-char tokens
-    LAST_CHAR = 127,
+    END_OF_FILE,
+    COLON,
+    LPAREN,
+    RPAREN,
+    LBRACE,
+    RBRACE,
+    LBRACKET,
+    RBRACKET,
+    COMMA,
+    DOT,
+    QUESTION,
+    SEMICOLON,
     KEYWORD,
     INT,
     FLOAT,
     STR,
     NAME,
+    //*multiplicative precedence
+    MUL,
+    FIRST_MUL = MUL,
+    DIV,
+    MOD,
+    BAND,
     LSHIFT,
     RSHIFT,
+    LAST_MUL = RSHIFT,
+    //*additive precedence
+    ADD,
+    FIRST_ADD = ADD,
+    SUB,
+    XOR,
+    BOR,
+    LAST_ADD = BOR,
+    //*comparative precedence
     EQ,
+    FIRST_CMP = EQ,
     NOTEQ,
+    LT,
+    GT,
     LTEQ,
     GTEQ,
+    LAST_CMP = GTEQ,
     AND,
     OR,
-    INC,
-    DEC,
-    COLON_ASSIGN,
+    //*Assignment operators
+    ASSIGN,
+    FIRST_ASSIGN = ASSIGN,
     ADD_ASSIGN,
-    FIRST_ASSIGN = ADD_ASSIGN, //*Should not be colon assign as that is parsed differently
     SUB_ASSIGN,
     OR_ASSIGN,
     AND_ASSIGN,
@@ -59,6 +86,9 @@ enum class TokenKind {
     DIV_ASSIGN,
     MOD_ASSIGN,
     LAST_ASSIGN = MOD_ASSIGN,
+    INC,
+    DEC,
+    COLON_ASSIGN,
     SIZE_OF_ENUM,
 };
 
@@ -91,11 +121,8 @@ bool is_keyword(const char* name);
 bool match_keyword(const char* name);
 bool match_token(TokenKind kind);
 bool expect_token(TokenKind kind);
-const char* temp_token_kind_str(TokenKind kind);
-
-#define IS_TOKEN(x) is_token(static_cast<TokenKind>(x))
-#define MATCH_TOKEN(x) match_token(static_cast<TokenKind>(x))
-#define EXPECT_TOKEN(x) expect_token(static_cast<TokenKind>(x))
+const char* token_info();
+const char* token_kind_name(TokenKind kind);
 
 void init_stream(const char* str);
 void lex_test();
