@@ -1,11 +1,12 @@
 #include <iostream>
 #include <types.hpp>
+#include <sstream>
 #include "StringIntern.hpp"
 #include "Globals.hpp"
 #include "Lex.hpp"
 #include "Print.hpp"
 #include "Parse.hpp"
-#include <sstream>
+#include "Resolve.hpp"
 
 #define ALIGN_DOWN(n, a) ((n) & ~((a) - 1))
 #define ALIGN_UP(n, a) ALIGN_DOWN((n) + (a) - 1, (a))
@@ -37,5 +38,7 @@ int main() {
     printf("\n\n\n");
 
     parse_test();
+
+    resolve_test();
 
 }

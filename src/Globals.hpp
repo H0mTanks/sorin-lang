@@ -2,6 +2,7 @@
 #include <vector>
 #include "Lex.hpp"
 #include "StringIntern.hpp"
+#include "Resolve.hpp"
 
 #define KILOBYTE(x) 1024 * (x)
 #define MEGABYTE(x) 1024 * KILOBYTE(x)
@@ -34,5 +35,7 @@ extern const char* stream;
 
 //*memory for ast
 extern Arena ast_arena;
+
+extern std::vector<Sym> sym_list;
 
 }

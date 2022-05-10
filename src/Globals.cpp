@@ -71,4 +71,6 @@ const char* stream = nullptr;
 
 Arena ast_arena;
 
+std::vector<Sym> sym_list;
+
 }
