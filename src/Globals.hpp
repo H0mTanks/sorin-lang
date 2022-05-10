@@ -3,6 +3,10 @@
 #include "Lex.hpp"
 #include "StringIntern.hpp"
 
+#define KILOBYTE(x) 1024 * (x)
+#define MEGABYTE(x) 1024 * KILOBYTE(x)
+#define GIGABYTE(x) 1024 * MEGABYTE(x)
+
 void* xcalloc(size_t num_elems, size_t elem_size);
 
 void* xrealloc(void* ptr, size_t num_bytes);

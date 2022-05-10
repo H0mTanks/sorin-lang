@@ -4,7 +4,8 @@
 #include <cassert>
 
 Internal constexpr size_t ARENA_ALIGNMENT = 8;
-Internal constexpr size_t ARENA_BLOCK_SIZE = 1024;
+//Internal constexpr size_t ARENA_BLOCK_SIZE = KILOBYTE(1);
+Internal constexpr size_t ARENA_BLOCK_SIZE = MEGABYTE(1);
 
 Internal size_t align_up(size_t num, size_t alignment) {
     size_t modulo = num & (alignment - 1);

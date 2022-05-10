@@ -14,7 +14,7 @@
 #define ARENA_BLOCK_SIZE 1024
 
 int main() {
-    std::cout << "hello world\n";
+    std::cout << "Running main\n";
     Global::string_table.intern_test();
 
     lex_test();
@@ -23,6 +23,7 @@ int main() {
         std::cout << intern.str << std::endl;
     }
 
+    std::cout << "TokenKind names" << std::endl;
     for (int i = 0; i < (int)TokenKind::SIZE_OF_ENUM; i++) {
         if (!Global::token_kind_names[i]) {
             continue;
