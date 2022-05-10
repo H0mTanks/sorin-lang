@@ -176,7 +176,7 @@ Internal Expr* parse_expr_base() {
 }
 
 Internal bool is_unary_op() {
-    return is_token(TokenKind::ADD) || is_token(TokenKind::SUB) || is_token(TokenKind::MUL) || is_token(TokenKind::BAND);
+    return is_token(TokenKind::ADD) || is_token(TokenKind::SUB) || is_token(TokenKind::MUL) || is_token(TokenKind::AND);
 }
 
 Internal Expr* parse_expr_unary() {
@@ -236,16 +236,16 @@ Internal Expr* parse_expr_cmp() {
 
 Internal Expr* parse_expr_and() {
     Expr* expr = parse_expr_cmp();
-    while (match_token(TokenKind::AND)) {
-        expr = expr_binary(TokenKind::AND, expr, parse_expr_cmp());
+    while (match_token(TokenKind::AND_AND)) {
+        expr = expr_binary(TokenKind::AND_AND, expr, parse_expr_cmp());
     }
     return expr;
 }
 
 Internal Expr* parse_expr_or() {
     Expr* expr = parse_expr_and();
-    while (match_token(TokenKind::OR)) {
-        expr = expr_binary(TokenKind::OR, expr, parse_expr_and());
+    while (match_token(TokenKind::OR_OR)) {
+        expr = expr_binary(TokenKind::OR_OR, expr, parse_expr_and());
     }
     return expr;
 }
@@ -526,11 +526,6 @@ Stmt* parse_stmt() {
     else if (is_token(TokenKind::LBRACE)) {
         return stmt_block(parse_stmt_block());
     }
-    else if (match_keyword(return_keyword)) {
-        Stmt* stmt = stmt_return(parse_expr());
-        expect_token(TokenKind::SEMICOLON);
-        return stmt;
-    }
     else if (match_keyword(break_keyword)) {
         expect_token(TokenKind::SEMICOLON);
         return stmt_break();
@@ -538,6 +533,23 @@ Stmt* parse_stmt() {
     else if (match_keyword(continue_keyword)) {
         expect_token(TokenKind::SEMICOLON);
         return stmt_continue();
+    }
+    else if (match_keyword(return_keyword)) {
+        Stmt* stmt = nullptr;
+        if (!is_token(TokenKind::SEMICOLON)) {
+            stmt = stmt_return(parse_expr());
+        }
+        else {
+            stmt = stmt_return(nullptr);
+        }
+
+        expect_token(TokenKind::SEMICOLON);
+        return stmt;
+    }
+
+    Decl* decl = parse_decl_opt();
+    if (decl) {
+        return stmt_decl(decl);
     }
 
     Stmt* stmt = parse_simple_stmt();
@@ -585,7 +597,7 @@ Internal Decl* parse_decl_func() {
 
 }
 
-Decl* parse_decl() {
+Decl* parse_decl_opt() {
     using namespace Keywords;
     if (match_keyword(enum_keyword)) {
         return parse_decl_enum();
@@ -609,8 +621,15 @@ Decl* parse_decl() {
         return parse_decl_func();
     }
 
-    fatal_syntax_error("Expected declaration keyword, got %s", token_info());
     return nullptr;
+}
+
+Decl* parse_decl() {
+    Decl* decl = parse_decl_opt();
+    if (!decl) {
+        fatal_syntax_error("Expected declaration keyword, got %s", token_info());
+    }
+    return decl;
 }
 
 void parse_and_print_decl(const char* str) {
@@ -636,6 +655,10 @@ void parse_test() {
         "var v: Vector = {1.0, -1.0}",
         "union IntOrFloat { i: int; f: float; }",
         "typedef Vectors = Vector[1+2]",
+        "func f() { do { print(42); } while(1); }",
+        "typedef T = (func(int):int)[16]",
+        "func f() { enum E { A, B, C } return; }",
+        "func f() { if (1) { return 1; } else if (2) { return 2; } else { return 3; } }",
     };
 
     for (const char** it = tests; it != tests + sizeof(tests) / sizeof(*tests); it++) {

@@ -119,12 +119,12 @@ Internal void init_token_kind_names() {
     token_kind_names[(int)TokenKind::MUL] = "*",
     token_kind_names[(int)TokenKind::DIV] = "/",
     token_kind_names[(int)TokenKind::MOD] = "%",
-    token_kind_names[(int)TokenKind::BAND] = "&",
+    token_kind_names[(int)TokenKind::AND] = "&",
     token_kind_names[(int)TokenKind::LSHIFT] = "<<";
     token_kind_names[(int)TokenKind::RSHIFT] = ">>";
     token_kind_names[(int)TokenKind::ADD] = "+",
     token_kind_names[(int)TokenKind::SUB] = "-",
-    token_kind_names[(int)TokenKind::BOR] = "|",
+    token_kind_names[(int)TokenKind::OR] = "|",
     token_kind_names[(int)TokenKind::XOR] = "^",
     token_kind_names[(int)TokenKind::EQ] = "==";
     token_kind_names[(int)TokenKind::NOTEQ] = "!=";
@@ -132,8 +132,8 @@ Internal void init_token_kind_names() {
     token_kind_names[(int)TokenKind::GT] = ">",
     token_kind_names[(int)TokenKind::LTEQ] = "<=";
     token_kind_names[(int)TokenKind::GTEQ] = ">=";
-    token_kind_names[(int)TokenKind::AND] = "&&";
-    token_kind_names[(int)TokenKind::OR] = "||";
+    token_kind_names[(int)TokenKind::AND_AND] = "&&";
+    token_kind_names[(int)TokenKind::OR_OR] = "||";
     token_kind_names[(int)TokenKind::ASSIGN] = "=",
     token_kind_names[(int)TokenKind::ADD_ASSIGN] = "+=";
     token_kind_names[(int)TokenKind::SUB_ASSIGN] = "-=";
@@ -573,11 +573,11 @@ repeat:
             break;
         }
         case '&': {
-            token.kind = op_triple_kind('&', TokenKind::BAND, '=', TokenKind::AND_ASSIGN, '&', TokenKind::AND);
+            token.kind = op_triple_kind('&', TokenKind::AND, '=', TokenKind::AND_ASSIGN, '&', TokenKind::AND_AND);
             break;
         }
         case '|': {
-            token.kind = op_triple_kind('|', TokenKind::BOR, '=', TokenKind::OR_ASSIGN, '&', TokenKind::OR);
+            token.kind = op_triple_kind('|', TokenKind::OR, '=', TokenKind::OR_ASSIGN, '&', TokenKind::OR_OR);
             break;
         }
         default: {

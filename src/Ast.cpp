@@ -155,8 +155,14 @@ Expr* expr_sizeof_type(Typespec* type) {
 }
 
 Stmt* stmt_new(StmtKind kind) {
-    Stmt* s = (Stmt*)ast_alloc(sizeof(Stmt)); //?Was (Stmt*)xcalloc(1, sizeof(Stmt))
+    Stmt* s = (Stmt*)ast_alloc(sizeof(Stmt));
     s->kind = kind;
+    return s;
+}
+
+Stmt* stmt_decl(Decl* decl) {
+    Stmt* s = stmt_new(StmtKind::DECL);
+    s->decl = decl;
     return s;
 }
 

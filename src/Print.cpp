@@ -177,9 +177,16 @@ void print_stmt_block(StmtBlock block) {
 void print_stmt(Stmt* stmt) {
     Stmt* s = stmt;
     switch (s->kind) {
+        case StmtKind::DECL: {
+            print_decl(s->decl);
+            break;
+        }
         case StmtKind::RETURN: {
-            printf("(return ");
-            print_expr(s->return_stmt.expr);
+            printf("(return");
+            if (s->return_stmt.expr) {
+                printf(" ");
+                print_expr(s->return_stmt.expr);
+            }
             printf(")");
             break;
         }
@@ -413,8 +420,8 @@ T* list_single(const std::initializer_list<T>& lst) {
 void print_tests() {
     //*Expressions
     Expr* exprs[] = {
-        expr_binary((TokenKind)'+', expr_int(1), expr_int(2)),
-        expr_unary((TokenKind)'-', expr_float(3.14)),
+        expr_binary(TokenKind::ADD, expr_int(1), expr_int(2)),
+        expr_unary(TokenKind::SUB, expr_float(3.14)),
         expr_ternary(expr_name("flag"), expr_str("true"), expr_str("false")),
         expr_field(expr_name("person"), "name"),
         expr_call(expr_name("fact"), list({ expr_int(42) }), 1),

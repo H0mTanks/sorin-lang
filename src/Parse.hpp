@@ -1,6 +1,7 @@
 #pragma once
 #include "Ast.hpp"
 
+Decl* parse_decl_opt();
 Decl* parse_decl();
 Typespec* parse_type();
 Stmt* parse_stmt();

@@ -167,6 +167,7 @@ Expr* expr_sizeof_type(Typespec* type);
 
 enum class StmtKind {
     NONE,
+    DECL,
     RETURN,
     BREAK,
     CONTINUE,
@@ -252,8 +253,11 @@ struct Stmt {
         AssignStmt assign;
         InitStmt init;
         Expr* expr;
+        Decl* decl;
     };
 };
+
+Stmt* stmt_decl(Decl* decl);
 
 Stmt* stmt_return(Expr* expr);
 
