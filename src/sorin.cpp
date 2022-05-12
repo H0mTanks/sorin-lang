@@ -8,11 +8,7 @@
 #include "Parse.hpp"
 #include "Resolve.hpp"
 
-#define ALIGN_DOWN(n, a) ((n) & ~((a) - 1))
-#define ALIGN_UP(n, a) ALIGN_DOWN((n) + (a) - 1, (a))
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define ARENA_ALIGNMENT 8
-#define ARENA_BLOCK_SIZE 1024
+//TODO:printf stream into buffer
 
 int main() {
     std::cout << "Running main\n";

@@ -415,6 +415,7 @@ Internal Stmt* parse_simple_stmt() {
     if (match_token(TokenKind::COLON_ASSIGN)) {
         if (expr->kind != ExprKind::NAME) {
             fatal_syntax_error("Colon Assign must be preceded by name");
+            return nullptr;
         }
         stmt = stmt_init(expr->name, parse_expr());
     }
@@ -535,16 +536,13 @@ Stmt* parse_stmt() {
         return stmt_continue();
     }
     else if (match_keyword(return_keyword)) {
-        Stmt* stmt = nullptr;
+        Expr* expr = nullptr;
         if (!is_token(TokenKind::SEMICOLON)) {
-            stmt = stmt_return(parse_expr());
-        }
-        else {
-            stmt = stmt_return(nullptr);
+            expr = parse_expr();
         }
 
         expect_token(TokenKind::SEMICOLON);
-        return stmt;
+        return stmt_return(expr);
     }
 
     Decl* decl = parse_decl_opt();

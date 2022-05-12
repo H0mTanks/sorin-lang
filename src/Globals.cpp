@@ -71,6 +71,16 @@ const char* stream = nullptr;
 
 Arena ast_arena;
 
-std::vector<Sym> sym_list;
+std::vector<Sym> syms;
+
+Type type_int_val = { TypeKind::INT };
+Type type_float_val = { TypeKind::FLOAT };
+
+Type* type_int = &type_int_val;
+Type* type_float = &type_float_val;
+
+std::vector<CachedPtrType> cached_ptr_types;
+std::vector<CachedArrayType> cached_array_types;
+std::vector<CachedFuncType> cached_func_types;
 
 }

@@ -36,6 +36,16 @@ extern const char* stream;
 //*memory for ast
 extern Arena ast_arena;
 
-extern std::vector<Sym> sym_list;
+extern std::vector<Sym> syms;
+
+extern Type type_int_val;
+extern Type type_float_val;
+
+extern Type* type_int;
+extern Type* type_float;
+
+extern std::vector<CachedPtrType> cached_ptr_types;
+extern std::vector<CachedArrayType> cached_array_types;
+extern std::vector<CachedFuncType> cached_func_types;
 
 }
