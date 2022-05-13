@@ -30,6 +30,12 @@ void* xmalloc(size_t num_bytes) {
     return ptr;
 }
 
+void* memdup(void* src, size_t size) {
+    void* dest = xmalloc(size);
+    memcpy(dest, src, size);
+    return dest;
+}
+
 void fatal(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -58,6 +64,7 @@ void fatal_syntax_error(const char* fmt, ...) {
     va_end(args);
     exit(1);
 }
+
 
 namespace Global {
 

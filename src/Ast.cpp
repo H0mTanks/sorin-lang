@@ -46,7 +46,7 @@ Typespec* typespec_array(Typespec* elem, Expr* size) {
 
 Typespec* typespec_func(Typespec** args, size_t num_args, Typespec* ret) {
     Typespec* t = typespec_new(TypespecKind::FUNC);
-    t->func.args = args;
+    t->func.args = (Typespec**)ast_dup(args, num_args * sizeof(Typespec*));
     t->func.num_args = num_args;
     t->func.ret = ret;
     return t;
@@ -58,7 +58,7 @@ Expr* expr_new(ExprKind kind) {
     return e;
 }
 
-Expr* expr_int(u64 int_val) {
+Expr* expr_int(i64 int_val) {
     Expr* e = expr_new(ExprKind::INT);
     e->int_val = int_val;
     return e;
@@ -85,7 +85,7 @@ Expr* expr_name(const char* name) {
 Expr* expr_compound(Typespec* type, Expr** args, size_t num_args) {
     Expr* e = expr_new(ExprKind::COMPOUND);
     e->compound.type = type;
-    e->compound.args = args;
+    e->compound.args = (Expr**)ast_dup(args, num_args * sizeof(Expr*));
     e->compound.num_args = num_args;
     return e;
 }
@@ -100,7 +100,7 @@ Expr* expr_cast(Typespec* type, Expr* expr) {
 Expr* expr_call(Expr* expr, Expr** args, size_t num_args) {
     Expr* e = expr_new(ExprKind::CALL);
     e->call.expr = expr;
-    e->call.args = args;
+    e->call.args = (Expr**)ast_dup(args, num_args * sizeof(Expr*));
     e->call.num_args = num_args;
     return e;
 }
@@ -190,7 +190,7 @@ Stmt* stmt_if(Expr* cond, StmtBlock then_block, ElseIf* elseifs, size_t num_else
     Stmt* s = stmt_new(StmtKind::IF);
     s->if_stmt.cond = cond;
     s->if_stmt.then_block = then_block;
-    s->if_stmt.elseifs = elseifs;
+    s->if_stmt.elseifs = (ElseIf*)ast_dup(elseifs, num_elseifs * sizeof(ElseIf));
     s->if_stmt.num_elseifs = num_elseifs;
     s->if_stmt.else_block = else_block;
     return s;
@@ -222,7 +222,7 @@ Stmt* stmt_for(Stmt* init, Expr* cond, Stmt* next, StmtBlock block) {
 Stmt* stmt_switch(Expr* expr, SwitchCase* cases, size_t num_cases) {
     Stmt* s = stmt_new(StmtKind::SWITCH);
     s->switch_stmt.expr = expr;
-    s->switch_stmt.cases = cases;
+    s->switch_stmt.cases = (SwitchCase*)ast_dup(cases, num_cases * sizeof(SwitchCase));
     s->switch_stmt.num_cases = num_cases;
     return s;
 }
@@ -257,7 +257,7 @@ Internal Decl* decl_new(DeclKind kind, const char* name) {
 
 Decl* decl_enum(const char* name, EnumItem* items, size_t num_items) {
     Decl* d = decl_new(DeclKind::ENUM, name);
-    d->enum_decl.items = items;
+    d->enum_decl.items = (EnumItem*)ast_dup(items, num_items * sizeof(EnumItem));
     d->enum_decl.num_items = num_items;
     return d;
 }
@@ -265,7 +265,7 @@ Decl* decl_enum(const char* name, EnumItem* items, size_t num_items) {
 Decl* decl_aggregate(DeclKind kind, const char* name, AggregateItem* items, size_t num_items) {
     assert(kind == DeclKind::STRUCT || kind == DeclKind::UNION);
     Decl* d = decl_new(kind, name);
-    d->aggregate.items = items;
+    d->aggregate.items = (AggregateItem*)ast_dup(items, num_items * sizeof(AggregateItem));
     d->aggregate.num_items = num_items;
     return d;
 }
@@ -273,7 +273,7 @@ Decl* decl_aggregate(DeclKind kind, const char* name, AggregateItem* items, size
 
 Decl* decl_union(const char* name, AggregateItem* items, size_t num_items) {
     Decl* d = decl_new(DeclKind::UNION, name);
-    d->aggregate.items = items;
+    d->aggregate.items = (AggregateItem*)ast_dup(items, num_items * sizeof(AggregateItem));
     d->aggregate.num_items = num_items;
     return d;
 }
@@ -287,7 +287,7 @@ Decl* decl_var(const char* name, Typespec* type, Expr* expr) {
 
 Decl* decl_func(const char* name, FuncParam* params, size_t num_params, Typespec* ret_type, StmtBlock block) {
     Decl* d = decl_new(DeclKind::FUNC, name);
-    d->func.params = params;
+    d->func.params = (FuncParam*)ast_dup(params, num_params * sizeof(FuncParam));
     d->func.num_params = num_params;
     d->func.ret_type = ret_type;
     d->func.block = block;

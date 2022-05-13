@@ -117,7 +117,7 @@ struct FieldExpr {
 struct Expr {
     ExprKind kind;
     union {
-        u64 int_val;
+        i64 int_val;
         f64 float_val;
         const char* str_val;
         const char* name;
@@ -137,7 +137,7 @@ struct Expr {
 
 Expr* expr_new(ExprKind kind);
 
-Expr* expr_int(u64 int_val);
+Expr* expr_int(i64 int_val);
 
 Expr* expr_float(f64 float_val);
 

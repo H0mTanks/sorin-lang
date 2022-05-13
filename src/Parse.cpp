@@ -23,7 +23,7 @@ Internal Typespec* parse_type_func() {
         ret = parse_type();
     }
 
-    return typespec_func((Typespec**)ast_dup(args.data(), args.size() * sizeof(Typespec*)), args.size(), ret);
+    return typespec_func(args.data(), args.size(), ret);
 }
 
 Internal Typespec* parse_type_base() {
@@ -81,12 +81,12 @@ Internal Expr* parse_expr_compound(Typespec* type) {
     }
 
     expect_token(TokenKind::RBRACE);
-    return expr_compound(type, (Expr**)ast_dup(args.data(), args.size() * sizeof(Expr*)), args.size());
+    return expr_compound(type, args.data(), args.size());
 }
 
 Internal Expr* parse_expr_operand() {
     if (is_token(TokenKind::INT)) {
-        u64 val = Global::token.int_val;
+        i64 val = Global::token.int_val;
         next_token();
         return expr_int(val);
     }
@@ -156,7 +156,7 @@ Internal Expr* parse_expr_base() {
             }
 
             expect_token(TokenKind::RPAREN);
-            expr = expr_call(expr, (Expr**)ast_dup(args.data(), args.size() * sizeof(Expr*)), args.size());
+            expr = expr_call(expr, args.data(), args.size());
         }
         else if (match_token(TokenKind::LBRACKET)) {
             Expr* index = parse_expr();
@@ -304,7 +304,7 @@ Internal Decl* parse_decl_enum() {
     }
 
     expect_token(TokenKind::RBRACE);
-    return decl_enum(name, (EnumItem*)ast_dup(items.data(), items.size() * sizeof(EnumItem)), items.size());
+    return decl_enum(name, items.data(), items.size());
 }
 
 Internal AggregateItem parse_decl_aggregate_item() {
@@ -319,7 +319,7 @@ Internal AggregateItem parse_decl_aggregate_item() {
     Typespec* type = parse_type();
     
     expect_token(TokenKind::SEMICOLON);
-    return AggregateItem{(const char**)ast_dup(names.data(), names.size() * sizeof(const char*)), names.size(), type};
+    return AggregateItem{ (const char**)ast_dup(names.data(), names.size() * sizeof(const char*)), names.size(), type }; //?see if this ast_dup call can be pulled out into a func
 }
 
 Internal Decl* parse_decl_aggregate(DeclKind kind) {
@@ -333,7 +333,7 @@ Internal Decl* parse_decl_aggregate(DeclKind kind) {
     }
     expect_token(TokenKind::RBRACE);
 
-    return decl_aggregate(kind, name, (AggregateItem*)ast_dup(items.data(), items.size() * sizeof(AggregateItem)), items.size());
+    return decl_aggregate(kind, name, items.data(), items.size());
 }
 
 Internal Decl* parse_decl_var() {
@@ -383,7 +383,7 @@ Internal Stmt* parse_stmt_if() {
         elseifs.push_back(ElseIf{elseif_cond, elseif_block});
     }
 
-    return stmt_if(cond, then_block, (ElseIf*)ast_dup(elseifs.data(), elseifs.size() * sizeof(ElseIf)), elseifs.size(), else_block);
+    return stmt_if(cond, then_block, elseifs.data(), elseifs.size(), else_block);
 }
 
 Stmt* parse_stmt_while() {
@@ -488,8 +488,8 @@ Internal SwitchCase parse_stmt_switch_case() {
         stmts.push_back(parse_stmt());
     }
 
-    StmtBlock block = {(Stmt**)ast_dup(stmts.data(), stmts.size() * sizeof(Stmt*)), stmts.size()};
-    return SwitchCase{(Expr**)ast_dup(exprs.data(), exprs.size() * sizeof(Expr*)), exprs.size(), is_default, block};
+    StmtBlock block = { (Stmt**)ast_dup(stmts.data(), stmts.size() * sizeof(Stmt*)), stmts.size() }; //?see if this ast_dup call can be pulled out into a func
+    return SwitchCase{ (Expr**)ast_dup(exprs.data(), exprs.size() * sizeof(Expr*)), exprs.size(), is_default, block };//?see if this ast_dup call can be pulled out into a func
 }
 
 
@@ -503,7 +503,7 @@ Internal Stmt* parse_stmt_switch() {
     }
     expect_token(TokenKind::RBRACE);
 
-    return stmt_switch(expr, (SwitchCase*)ast_dup(cases.data(), cases.size() * sizeof(SwitchCase)), cases.size());
+    return stmt_switch(expr, cases.data(), cases.size());
 }
 
 
@@ -563,7 +563,7 @@ StmtBlock parse_stmt_block() {
     }
 
     expect_token(TokenKind::RBRACE);
-    return StmtBlock{(Stmt**)ast_dup(stmts.data(), stmts.size() * sizeof(Stmt*)), stmts.size()};
+    return StmtBlock{(Stmt**)ast_dup(stmts.data(), stmts.size() * sizeof(Stmt*)), stmts.size()}; //?see if this ast_dup call can be pulled out into a func
 }
 
 Internal FuncParam parse_decl_func_param() {
@@ -591,7 +591,7 @@ Internal Decl* parse_decl_func() {
     }
 
     StmtBlock block = parse_stmt_block();
-    return decl_func(name, (FuncParam*)ast_dup(params.data(), params.size() * sizeof(FuncParam)), params.size(), ret_type, block);
+    return decl_func(name, params.data(), params.size(), ret_type, block);
 
 }
 

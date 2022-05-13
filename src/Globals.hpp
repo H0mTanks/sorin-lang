@@ -14,6 +14,8 @@ void* xrealloc(void* ptr, size_t num_bytes);
 
 void* xmalloc(size_t num_bytes);
 
+void* memdup(void* src, size_t size);
+
 void fatal(const char* fmt, ...);
 
 void syntax_error(const char* fmt, ...);
