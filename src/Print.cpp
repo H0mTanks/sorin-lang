@@ -32,7 +32,7 @@ void print_typespec(Typespec* type) {
             printf("(array ");
             print_typespec(t->array.elem);
             printf(" ");
-            //!TODO! print_expr(array.size);
+            print_expr(t->array.size);
             printf(")");
             break;
         }
@@ -183,9 +183,9 @@ void print_stmt(Stmt* stmt) {
         }
         case StmtKind::RETURN: {
             printf("(return");
-            if (s->return_stmt.expr) {
+            if (s->expr) {
                 printf(" ");
-                print_expr(s->return_stmt.expr);
+                print_expr(s->expr);
             }
             printf(")");
             break;

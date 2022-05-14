@@ -168,7 +168,7 @@ Stmt* stmt_decl(Decl* decl) {
 
 Stmt* stmt_return(Expr* expr) {
     Stmt* s = stmt_new(StmtKind::RETURN);
-    s->return_stmt.expr = expr;
+    s->expr = expr;
     return s;
 }
 
